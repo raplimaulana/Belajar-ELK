@@ -1,0 +1,40 @@
+### OBJECT FIELD ###
+Bagaimana jika kita butuh membuat atribut dengan tipe data Object? Yang artinya kita butuh membuat nested atribut?
+Pada kasus seperti itu, kita bisa menggunakan type properties, lalu membuat nested attribute seperti Mapping biasanya.
+Misal, kita coba tambahkan atribut address pada data customer yang sebelumnya kita buat.
+
+#Object mapping
+#Update customers_v2 mapping
+PUT http://localhost:9200/customers_v2/_mapping
+Content-Type: application/json
+
+{
+  "properties" : {
+    "address" : {
+      "properties" : {
+        "street" : {
+          "type" : "text"
+        },
+        "city" : {
+          "type" : "text"
+        },
+        "province" : {
+          "type" : "text"
+        },
+        "country" : {
+          "type" : "text"
+        },
+        "zip_code" : {
+          "type" : "keyword"
+        }
+      }
+    }
+  }
+}
+
+#Bulk
+#Bulk insert customers
+POST http://localhost:9200/_bulk
+Content-Type: application/json
+
+< customers-with-addresses.json

@@ -1,0 +1,33 @@
+### MENGINSTALL ELASTICSEARCH ###
+Sebelum kita install Elasticsearch, kita perlu download terlebih dahulu.
+Saya rekomendasikan download dalam format Archive File.
+https://www.elastic.co/elasticsearch/ 
+
+##Konfigurasi Elasticsearch
+Secara default, di dalam Elasticsearch terdapat fitur bernama X-Pack, fitur ini adalah fitur yang tidak open source dan dibuat oleh perusahaan Elastic.
+Oleh karena itu, di kelas ini kita akan menonaktifkan terlebih dahulu fitur X-Pack, karena itu adalah plugin tambahan.
+Semua konfigurasi di Elasticsearch terdapat di file config/elasticsearch.yml
+Elasticsearch menggunakan format YAML sebagai konfigurasinya.
+https://yaml.org/ 
+
+#edit file config
+nano elasticsearch-8.9.1/config/elasticsearch.yaml
+
+cluster.name: cluster-rapli
+node.name: node-1
+xpack.security.enabled: false
+http.port: 9200
+path.data: data
+path.logs: logs
+
+##Menjalankan Elasticsearch
+Untuk menjalankan aplikasi Elasticsearch, kita cukup mengeksekusi file bin/elasticsearch menggunakan terminal.
+Jika sudah sukses, kita bisa mengakses aplikasi Elasticsearch di port 9200, sesuai dengan konfigurasi http.port di file konfigurasinya.
+Untuk menghentikan aplikasi Elasticsearch, kita bisa gunakan Ctrl + C.
+
+#Menjalankan Manual
+./bin/elasticsearch
+
+#Test Port Elasticsearch
+curl http://localhost:9200
+

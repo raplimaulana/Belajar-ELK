@@ -1,0 +1,103 @@
+### ARRAY FIELD ###
+
+##Array Field
+Seperti yang dijelaskan di awal, bahwa Lucene Document menggunakan key-value, dan untuk value di Lucene Document, dia bisa menyimpan lebih dari satu nilai.
+Jadi jika kita memiliki atribut Array, maka kita cukup membuat atribut dengan tipe data yang sesuai dengan isi Array nya.
+
+-  Elasticsearch array to lucene document
+   #Data elasticsearch (elasticsearch.json)
+   {
+       "_id" : "12345",
+       "first_name" : "Rapli",
+       "last_name" : "Maulana",
+       "email" : "rapli.aji@gmail.com",
+       "age" : "27",
+       "hobbies" : ["Coding","Reading"]
+   }
+
+   #Konversi ke data lucene (lucene.doc)
+   {
+       "_id" : ["12345"],
+       "first_name" : ["Rapli"],
+       "last_name" : ["Maulana"],
+       "email" : ["rapli.aji@gmail.com"],
+       "age" : ["27"],
+       "hobbies" : ["Coding","Reading"]
+   }
+
+##Array of Object
+Bagaimana jika ternyata tipe data atribut tersebut adalah Array of Object?
+Karena memang Lucene Document tidak mendukungnya, secara otomatis sebenarnya Elasticsearch akan mengubah data Array of Object, menjadi key-value biasa.
+Dengan begitu, kita cukup membuat atribut dengan mapping tipe data object.
+
+-  Elasticsearch array embedded object to lucene document
+   #Data elasticsearch (elasticsearch.json)
+   {
+       "_id" : "12345",
+       "first_name" : "Rapli",
+       "last_name" : "Maulana",
+       "email" : "rapli.aji@gmail.com",
+       "age" : "27",
+       "hobbies" : ["Coding","Reading"],
+       "address: [
+          {
+             "street" : "Jalan pasar inpres",
+             "city" : "Subang",
+             "country" : "Indonesia" 
+          },
+          {
+             "street" : "Jalan tegal rotan",
+             "city" : "Tangerang",
+             "country" : "Indonesia" 
+          },
+       ]
+   }
+
+   #Konversi ke data lucene (lucene.doc)
+   {
+       "_id" : ["12345"],
+       "first_name" : ["Rapli"],
+       "last_name" : ["Maulana"],
+       "email" : ["rapli.aji@gmail.com"],
+       "age" : "27",
+       "hobbies" : ["Coding","Reading"], 
+       "address.street" : ["Jalan pasar inpres", "Jalan tegal rotan"],
+       "address.city" : ["Subang", "Tangerang"],
+       "address.country" : ["Indonesia"] 
+   }
+
+#Array mapping
+#Update customers_v2 mapping
+PUT http://localhost:9200/customers_v2/_mapping
+Content-Type: application/json
+
+{
+  "properties": {
+    "hobbies": {
+      "type": "text"
+    },
+    "banks": {
+      "properties": {
+        "name": {
+          "type": "text"
+        },
+        "account_number": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}
+
+#Get customers_v2 mapping
+GET http://localhost:9200/customers_v2/_mapping
+
+#Bulk
+#Bulk index customers_v2
+POST http://localhost:9200/_bulk
+Content-Type: application/json
+
+< customers-with-banks-and-hobbies.json
+
+#Search customer
+POST http://localhost:9200/customer/_search

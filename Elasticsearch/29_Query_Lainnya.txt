@@ -1,0 +1,4 @@
+### QUERY LAINNYA ###
+Sebenarnya masih banyak jenis Query yang didukung oleh Elasticsearch, bahkan terlalu banyak.
+Contoh range, wildcard, regexp, geo search, exists, dan lain-lain.
+Oleh karena itu, materi untuk Query akan kita bahas khusus di kelas terpisah, yaitu kelas Elasticsearch Query DSL (Domain Specific Language).

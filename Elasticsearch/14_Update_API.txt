@@ -1,0 +1,16 @@
+### UPDATE API ###
+Ketika melakukan update menggunakan Index API, Index API akan melakukan replace, artinya dokumen sebelumnya akan dihapus dan dibuat baru, hal ini mengakibatkan kita harus mengirim seluruh atributnya lagi, karena jika kita hanya mengirim atribut yang di-update, secara otomatis akan ditimpa, artinya data di atribut lain bisa hilang.
+Jika kita ingin mengupdate beberapa atribut saja di dokumen, tanpa harus mengirim ulang seluruh atribut, kita bisa menggunakan Update API dengan RESTful API :
+POST /<index_name>/_update/<id>
+
+Jika dokumen yang di update tidak tersedia, maka Elasticsearch akan mengembalikan 404 Not Found.
+
+#Update document
+POST http://localhost:9200/products/_update/5
+Content-Type: application/json
+
+{
+  "doc" : {
+    "price": 30000000
+  }
+}

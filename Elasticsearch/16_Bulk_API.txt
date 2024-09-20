@@ -1,0 +1,48 @@
+### BULK API ###
+Saat melakukan operasi yang sangat banyak ke Elasticsearch, ada baiknya kita menggunakan Bulk API untuk mempercepat proses, dibandingkan dilakukan satu per satu secara manual.
+Elasticsearch menyediakan Bulk API yang bisa digunakan menggabungkan banyak operasi sekaligus, create, index, update atau delete.
+
+Untuk menggunakan Bulk API, kita bisa menggunakan RESTful API :
+POST /_bulk
+POST /<index_name>/_bulk
+
+##Format Request Body untuk Bulk API
+action_and_meta_data\n
+optional_source\n
+action_and_meta_data\n
+optional_source\n
+....
+action_and_meta_data\n
+optional_source\n
+
+#bulk api 1
+POST http://localhost:9200/_bulk
+Content-Type: application/json
+
+{"create" :  {"_index" :  "customers", "_id":  "joko"}}
+{"name" :  "Joko Morro", "register_at": "2023-10-10 00:00:00"}
+{"index" :  {"_index" :  "customers", "_id":  "budi"}}
+{"name" :  "Budi Nugraha", "register_at": "2023-10-10 00:00:00"}
+{"update" :  {"_index" :  "products", "_id":  "1"}}
+{"doc" :  {"price" :  2500}}
+{"create" :  {"_index" :  "customers", "_id":  "spammer"}}
+{"name" :  "Spammer", "register_at": "2023-10-10 00:00:00"}
+{"delete" :  {"_index" :  "customers", "_id":  "spammer"}}
+
+#bulk api 2
+nano bulk.json
+{"create" :  {"_index" :  "customers", "_id":  "joko"}}
+{"name" :  "Joko Morro", "register_at": "2023-10-10 00:00:00"}
+{"index" :  {"_index" :  "customers", "_id":  "budi"}}
+{"name" :  "Budi Nugraha", "register_at": "2023-10-10 00:00:00"}
+{"update" :  {"_index" :  "products", "_id":  "1"}}
+{"doc" :  {"price" :  2500}}
+{"create" :  {"_index" :  "customers", "_id":  "spammer"}}
+{"name" :  "Spammer", "register_at": "2023-10-10 00:00:00"}
+{"delete" :  {"_index" :  "customers", "_id":  "spammer"}}
+
+POST http://localhost:9200/_bulk
+Content-Type: application/json
+
+< bulk.json
+

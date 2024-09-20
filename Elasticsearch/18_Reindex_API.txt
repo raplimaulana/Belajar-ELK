@@ -1,0 +1,69 @@
+### REINDEX API ###
+Seperti yang dijelaskan di materi Alias, di Elasticsearch kita akan terbiasa membuat index baru ketika terjadi perubahan schema, sehingga membutuhkan Alias.
+Tapi pertanyaannya, bagaimana dengan data yang ada di Index lama?
+Kita bisa insert secara manual, atau kita bisa lakukan proses reindex, yaitu memindahkan data dari index ke index lain, menggunakan Reindex API :
+POST /_reindex
+
+#Create index orders_v2
+PUT http://localhost:9200/orders_v2
+
+#Update orders_v2 mapping
+PUT http://localhost:9200/orders_v2/_mapping
+Content-Type: application/json
+
+{
+  "numeric_detection" : true,
+  "date_detection" : true,
+  "dynamic_date_formats" : [
+    "yyyy-MM-dd HH:mm:ss",
+    "yyyy-MM-dd",
+    "yyyy/MM/dd HH:mm:ss",
+    "yyyy/MM/dd"
+  ]
+}
+
+#Reindex from orders to orders_v2
+POST http://localhost:9200/_reindex
+Content-Type: application/json
+
+{
+  "source": {
+    "index": "orders"
+  },
+  "dest": {
+    "index": "orders_v2"
+  }
+}
+
+#Search orders
+GET http://localhost:9200/orders/_search
+
+#Search orders_v2
+GET http://localhost:9200/orders_v2/_search
+
+#Switch alias order from orders to orders_v2
+POST http://localhost:9200/_aliases
+Content-Type: application/json
+
+{
+  "actions" : [
+    {
+      "remove" : {
+        "alias" : "order",
+        "index" : "orders"
+      }
+    },
+    {
+      "add" : {
+        "alias" : "order",
+        "index" : "orders_v2"
+      }
+    }
+  ]
+}
+
+#Get aliases
+GET http://localhost:9200/_aliases
+
+#Search to order alias
+GET http://localhost:9200/order/_search

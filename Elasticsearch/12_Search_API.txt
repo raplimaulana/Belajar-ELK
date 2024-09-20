@@ -1,0 +1,35 @@
+### SEARCH API ###
+
+##Search API
+Get API digunakan untuk mendapatkan satu dokumen, bagaimana jika kita ingin mencari dokumen, tidak menggunakan _id? Maka kita bisa menggunakan Search API.
+Search API sangat kompleks, sehingga akan dibahas dalam beberapa tahapan, di materi ini kita akan bahas yang sederhana dulu.
+Untuk menggunakan Search API, kita bisa menggunakan RESTful API :
+POST /_search
+POST /<nama_index>/_search
+
+#Search document
+POST http://localhost:9200/products/_search
+GET http://localhost:9200/products/_search                      #bisa mengguunakan GET, tapi jadi tidak bisa mengisi body
+
+##Pagination
+Search API mendukung pagination dengan cara menggunakan query parameter.
+from, untuk menentukan dari dokumen ke berapa, default nya adalah 0.
+size, untuk menentukan jumlah dokumen dalam response, defaultnya adalah 10.
+
+#Search document dengan pagination
+POST http://localhost:9200/products/_search?size=1&from=0       #search all products page 1
+POST http://localhost:9200/products/_search?size=1&from=1       #search all products page 2
+
+##Sorting
+Search API juga bisa digunakan untuk mengurutkan hasil response, dengan menggunakan query parameter sort, dengan nilai :
+<field>:<direction>
+Dimana direction bisa asc atau desc.
+
+Jika kita butuh mengurutkan dengan lebih dari satu field, kita bisa menggunakan pemisah koma, misal :
+field1:asc,field2:desc,field3:asc
+
+#Search document dengan sorting
+POST http://localhost:9200/products/_search?sort=price:asc      #search all products sort by price
+POST http://localhost:9200/products/_search?sort=name:desc      #search all products sort by name
+
+*tipe data text tidak bisa diurutkan

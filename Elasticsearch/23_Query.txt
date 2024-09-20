@@ -1,0 +1,44 @@
+### QUERY ###
+
+##Query
+Sebelumnya kita sudah membahas tentang Search API untuk melakukan pencarian data di Index.
+Sekarang kita bahas tentang Query yang bisa kita kirim menggunakan Search API.
+
+##Match All
+Secara default, saat kita menggunakan Search API tanpa request Query, maka dia akan menggunakan Query Match All.
+Query Match All digunakan untuk mengambil seluruh data di index.
+
+#Match all
+#Search customer using match_all
+POST http://localhost:9200/customer/_search
+Content-Type: application/json
+
+{
+  "query" : {
+    "match_all" : {}
+  }
+}
+
+##Paging dan Sorting
+Pada materi Search API, kita melakukan paging dan sorting menggunakan Query Parameter.
+Sebenarnya untuk melakukan Paging dan Sorting juga bisa kita gunakan Request Body, ini lebih mudah dibandingkan menggunakan Query Parameter, dan lebih mudah dibaca juga.
+
+#Paging dan sorting
+#Search customer using match_all
+POST http://localhost:9200/customer/_search
+Content-Type: application/json
+
+{
+  "query" : {
+    "match_all" : {}
+  },
+  "size" : 5,
+  "from" : 0,
+  "sort" : [
+    {
+      "username" : {
+        "order": "desc"
+      }
+    }
+  ]
+}

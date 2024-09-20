@@ -1,0 +1,67 @@
+### MULTI FIELDS ###
+Salah satu fitur yang menarik di Elasticsearch adalah Multi Fields, Multi Fields adalah fitur dimana kita bisa membuat beberapa nama field dari satu field.
+Yang menarik adalah, field tambahan tersebut bisa menggunakan tipe data yang berbeda.
+Contoh, kita ingin membuat field name, tapi kita ingin menggunakan tipe data text dan keyword. Pada kasus ini, kita bisa membuat 2 field misal name dan name_raw, namun kita harus memastikan dua value tersebut selalu sama.
+Dengan Multi Fields, kita tidak perlu membuat 2 field, cukup buat 1 field, lalu membuat Multi Fields dari field yang sudah ada dengan tipe berbeda.
+
+#Create index category
+PUT http://localhost:9200/categories
+
+#Update category mapping
+PUT http://localhost:9200/categories/_mapping
+Content-Type: application/json
+
+{
+  "properties" : {
+    "name": {
+      "type": "text",
+      "fields": {
+        "raw" : {               #bisa di query menggunakan field name.raw
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}
+
+#Get categories mapping
+GET http://localhost:9200/categories/_mapping
+
+#Insert categories
+POST http://localhost:9200/categories/_doc/1
+Content-Type: application/json
+
+{
+  "name" : "Laptop Murah"
+}
+
+#Search categories
+POST http://localhost:9200/categories/_search
+Content-Type: application/json
+
+{
+  "query": {
+    "match" : {
+      "name" : "laptop"
+    }
+  },
+  "sort": [
+    {
+      "name.raw" : {
+        "order": "asc"
+      }
+    }
+  ]
+}
+
+#Search categories
+POST http://localhost:9200/categories/_search
+Content-Type: application/json
+
+{
+  "query": {
+    "match" : {
+      "name.raw" : "Laptop Murah"
+    }
+  }
+}

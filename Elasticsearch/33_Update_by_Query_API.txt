@@ -1,0 +1,65 @@
+### UPDATE BY QUERY ###
+Saat kita misal menambah mapping seperti Multi Fields pada index yang sudah ada dokumennya, secara otomatis data di dalam Multi Fields tidak tersedia, kita harus melakukan reindex lagi.
+Namun untungnya, Elasticsearch memiliki API untuk melakukan Update by Query API.
+Jangan bingung dengan nama nya, karena ini bukan untuk mengubah banyak data sekaligus, namun lebih ke mengupdate Lucene Document dengan mapping baru.
+Kita bisa menggunakan API :
+POST /<index_name>/_update_by_query
+Lalu gunakan request body Query
+
+#Update product mapping
+#Update products mapping
+PUT http://localhost:9200/products/_mapping
+Content-Type: application/json
+
+{
+  "properties": {
+    "name": {
+      "type": "text",
+      "fields": {
+        "raw": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}
+
+#Get products mapping
+GET http://localhost:9200/products/_mapping
+
+#Search products
+POST http://localhost:9200/products/_search
+Content-Type: application/json
+
+{
+  "query": {
+    "match": {
+      "name.raw": "Mie Sedap Soto"
+    }
+  }
+}
+
+
+#Update by query
+#Update products by query
+POST http://localhost:9200/products/_update_by_query
+Content-Type: application/json
+
+{
+  "query": {
+    "match_all": {
+    }
+  }
+}
+
+#Search products
+POST http://localhost:9200/products/_search
+Content-Type: application/json
+
+{
+  "query": {
+    "match": {
+      "name.raw": "Mie Sedap Soto"
+    }
+  }
+}

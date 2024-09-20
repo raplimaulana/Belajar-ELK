@@ -1,0 +1,26 @@
+### PENGENALAN ELASTICSEARCH ###
+Elasticsearch adalah database management system yang berbasis RESTful API untuk kebutuhan pencarian data (search engine).
+Elasticsearch adalah salah satu database untuk pencarian yang paling populer dan banyak digunakan di perusahaan-perusahaan besar.
+Elasticsearch adalah aplikasi free dan open source, sehingga bisa digunakan secara bebas.
+
+##Apache Lucene
+Inti dari system Elasticsearch adalah sebuah library untuk Information Retrieval bernama Apache Lucene.
+Apache Lucene adalah library untuk information retrieval yang sangat populer, dan dibuat menggunakan bahasa pemrograman Java.
+Semua fitur di Elasticsearch, sebenarnya menggunakan Apache Lucene untuk mengelolanya (https://lucene.apache.org/).
+
+##Istilah Relational DB vs Elasticsearch
+------------------------------------------------
+| Relational DB |         Elasticsearch        |
+|---------------|------------------------------|
+| Database      |                              |
+|---------------|------------------------------|
+| Table         | Index                        |
+|---------------|------------------------------|
+| Column        | Field / Attribute            |
+|---------------|------------------------------|
+| Row, Record   | Document (JSON)              |
+|---------------|------------------------------|
+| Join Table    | Embedded Document, Reference |
+|---------------|------------------------------|
+| SQL           | JSON                         |
+|---------------|------------------------------|

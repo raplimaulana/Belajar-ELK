@@ -1,0 +1,110 @@
+### DYNAMIC MAPPING ###
+
+##Dynamic Mapping
+Saat kita membuat tabel di relational database, kita akan membuat struktur tabel nya terlebih dahulu.
+Di Elasticsearch, pembuatan schema index dinamakan mapping, dan secara default, kita tidak perlu membuat mapping secara manual.
+Elasticsearch memiliki fitur bernama Dynamic Mapping, dimana Elasticsearch bisa mendeteksi tipe data dari tiap atribut JSON yang kita gunakan, dan secara otomatis membuat mapping menggunakan tipe data yang sesuai.
+Walaupun fitur ini sangat bagus, tapi tetap sebenarnya direkomendasikan untuk membuat mapping secara manual atau eksplisit.
+Materi membuat mapping secara manual akan kita bahas di materi sendiri.
+
+##Dynamic Field Mapping
+---------------------------------------------------------------------------------------------------
+| JSON Data Type |                                Keterangan                                      |
+|----------------|--------------------------------------------------------------------------------|
+| null           | tidak ada field yang ditambah                                                  |
+|----------------|--------------------------------------------------------------------------------|
+| true / false   | boolean                                                                        |
+|----------------|--------------------------------------------------------------------------------|
+| double         | float                                                                          |
+|----------------|--------------------------------------------------------------------------------|
+| long           | long                                                                           |
+|----------------|--------------------------------------------------------------------------------|
+| array          | tergantung isi data pertama                                                    |                             
+|----------------|--------------------------------------------------------------------------------|
+| string         | data, float, lomg, text, tergantung apakah bisa di deteksi otomatis atau tidak |                             
+|----------------|--------------------------------------------------------------------------------|
+
+##Deteksi Date
+Secara default, Elasticsearch ketika menerima tipe data string, dan belum memiliki mapping untuk atribut tersebut, dia akan mendeteksi apakah data string tersebut menggunakan format date atau tidak.
+Jika menggunakan format date, maka secara otomatis tipe data akan menggunakan date.
+Elasticsearch secara default menggunakan  format date : yyyy/MM/dd HH:mm:ss.
+
+Secara default deteksi date aktif ketika kita membuat index, jika tidak ingin aktif, kita harus ubah mapping attribute date_detection menjadi false.
+Dan jika kita ingin mengubah format date, kita harus menggubah mapping attribute dynamic_date_formats.
+
+#Update dynamic mapping untuk date
+PUT http://localhost:9200/customers/_mapping
+Content-Type: application/json
+
+{
+  "date_detection" : true,
+  "dynamic_date_formats" : [
+    "yyyy-MM-dd HH:mm:ss",
+    "yyyy-MM-dd",
+    "yyyy/MM/dd HH:mm:ss",
+    "yyyy/MM/dd"
+  ]
+}
+
+PUT http://localhost:9200/products/_mapping
+Content-Type: application/json
+
+{
+  "date_detection" : true,
+  "dynamic_date_formats" : [
+    "yyyy-MM-dd HH:mm:ss",
+    "yyyy-MM-dd",
+    "yyyy/MM/dd HH:mm:ss",
+    "yyyy/MM/dd"
+  ]
+}
+
+PUT http://localhost:9200/orders/_mapping
+Content-Type: application/json
+
+{
+  "date_detection" : true,
+  "dynamic_date_formats" : [
+    "yyyy-MM-dd HH:mm:ss",
+    "yyyy-MM-dd",
+    "yyyy/MM/dd HH:mm:ss",
+    "yyyy/MM/dd"
+  ]
+}
+
+#get mapping
+GET http://localhost:9200/customers/_mapping
+GET http://localhost:9200/products/_mapping
+GET http://localhost:9200/orders/_mapping
+
+##Deteksi Number
+Walaupun sebenarnya JSON memiliki tipe data number, namun kadang-kadang ada beberapa pengguna mengirim number dalam format string, misal “100”, atau “12.12”.
+Secara default, deteksi number secara otomatis tidak aktif, jika ingin aktif, kita harus mengubah nilai mapping numeric_detection menjadi true.
+Jika mapping untuk atribut tersebut belum tersedia, maka secara otomatis Elasticsearch akan mencoba mengkonversi ke tipe data number (long atau float), jika bisa maka Elasticsearch akan menggunakan tipe data number.
+
+#Update dynamic mapping untuk numeric
+PUT http://localhost:9200/customers/_mapping
+Content-Type: application/json
+
+{
+  "numeric_detection": true
+}
+
+PUT http://localhost:9200/products/_mapping
+Content-Type: application/json
+
+{
+  "numeric_detection" : true
+}
+
+PUT http://localhost:9200/orders/_mapping
+Content-Type: application/json
+
+{
+  "numeric_detection" : true
+}
+
+#get mapping
+GET http://localhost:9200/customers/_mapping
+GET http://localhost:9200/products/_mapping
+GET http://localhost:9200/orders/_mapping

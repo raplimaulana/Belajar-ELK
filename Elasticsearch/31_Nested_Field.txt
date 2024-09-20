@@ -1,0 +1,187 @@
+### NESTED FIELD ###
+
+##Tipe Data Object dan Array
+Sebelumnya kita sudah bahas tipe data Object dan Array, seperti yang dijelaskan sebelumnya, bahwa tipe data tersebut tidak didukung oleh Lucene Document, oleh karena itu secara otomatis dibuat sebagai data flat oleh Elasticsearch.
+Namun, terdapat masalah yang terjadi ketika pada kasus tertentu.
+
+#Parents index
+#Create index parents
+PUT http://localhost:9200/parents
+
+#Update parents mapping
+PUT http://localhost:9200/parents/_mapping
+Content-Type: application/json
+
+{
+  "properties": {
+    "first_name": {
+      "type": "text"
+    },
+    "last_name": {
+      "type": "text"
+    },
+    "children": {
+      "properties": {
+        "first_name": {
+          "type": "text"
+        },
+        "last_name": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}
+
+#Get parents mapping
+GET http://localhost:9200/parents/_mapping
+
+#Create Parents
+#Insert parent eko
+POST http://localhost:9200/parents/_doc/1
+Content-Type: application/json
+
+{
+  "first_name" : "Eko",
+  "last_name" : "Khannedy",
+  "children" : [
+    {
+      "first_name" : "Joko",
+      "last_name" : "Morro"
+    },
+    {
+      "first_name" : "Budi",
+      "last_name" : "Nugraha"
+    }
+  ]
+}
+
+#Get parent 1
+GET http://localhost:9200/parents/_doc/1
+
+#output
+{
+      "first_name" : "Eko",
+      "last_name" : "Khannedy",
+      "children.first_name" : "Joko", "Budi",
+      "children.last_name" : "Morro", "Nugraha"
+}
+
+
+##Mencari Kombinasi di Tipe Data Object
+Sekarang misal kita ingin mencari parents yang memiliki anak dengan nama Joko Nugraha.
+Dari data sebelumnya, harusnya kita tidak menemukan data, karena parent Eko Khannedy, memiliki anak Budi Nugraha dan Joko Morro, tidak ada anak yang bernama Joko Nugraha.
+Namun karena data di Lucene Document sudah dibuat menjadi flat, secara otomatis anak dengan nama Joko Nugraha akan ditemukan di parent Eko Khannedy.
+
+#Search children
+POST http://localhost:9200/parents/_search
+Content-Type: application/json
+
+{
+  "query" : {
+    "bool" : {
+      "must": [
+        {
+          "match": {
+            "children.first_name" : "Joko"
+          }
+        },
+        {
+          "match": {
+            "children.last_name" : "Nugraha"
+          }
+        }
+      ]
+    }
+  }
+}
+
+##Nested Field
+Nested adalah tipe data spesial untuk object yang digunakan untuk menyimpan tiap object di array pada dokumen yang independen.
+Nested field dan Query yang dilakukan ke nested field sebenarnya adalah operasi yang sangat mahal, oleh karena itu, gunakan dengan bijak ketika menggunakan tipe data nested ini.
+Selain itu, karena nested field dilakukan oleh Elasticsearch dengan cara membuat hidden Lucene Document, oleh karena itu untuk melakukan Query ke nested field, kita juga harus menggunakan Nested Query.
+
+#Nested field
+#Delete parents index
+DELETE http://localhost:9200/parents
+
+#Create index parents
+PUT http://localhost:9200/parents
+
+#Update parents mapping
+PUT http://localhost:9200/parents/_mapping
+Content-Type: application/json
+
+{
+  "properties": {
+    "first_name": {
+      "type": "text"
+    },
+    "last_name": {
+      "type": "text"
+    },
+    "children": {
+      "type": "nested",
+      "properties": {
+        "first_name": {
+          "type": "text"
+        },
+        "last_name": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}
+
+#Get parents mapping
+GET http://localhost:9200/parents/_mapping
+
+#Insert parent eko
+POST http://localhost:9200/parents/_doc/1
+Content-Type: application/json
+
+{
+  "first_name" : "Eko",
+  "last_name" : "Khannedy",
+  "children" : [
+    {
+      "first_name" : "Joko",
+      "last_name" : "Morro"
+    },
+    {
+      "first_name" : "Budi",
+      "last_name" : "Nugraha"
+    }
+  ]
+}
+
+#Search children
+POST http://localhost:9200/parents/_search
+Content-Type: application/json
+
+{
+  "query": {
+    "nested": {
+      "path": "children",
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "match": {
+                "children.first_name": "Budi"
+              }
+            },
+            {
+              "match": {
+                "children.last_name": "Nugraha"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+*Karena nested bikin berat, disarankan buat 1 field full name saja (first name + last name)

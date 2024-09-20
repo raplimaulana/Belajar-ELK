@@ -1,0 +1,134 @@
+### SEARCH AFTER ###
+
+##Deep Paging Problem
+Saat ini, secara default Elasticsearch membatasi untuk mengembalikan hasil pencarian hanya 10K data (ingat, hasil pencarian, bukan total dokumen di index), yang artinya kita hanya bisa melihat hasil pencarian sampai hasil ke 10K.
+Hal ini terjadi karena dalam Distributed System, terdapat masalah Deep Paging Problem.
+Elasticsearch saat berjalan biasanya nanti akan memiliki lebih dari satu Node (aplikasi yang berjalan).
+Ketika kita mencari data, Elasticsearch harus mengumpulkan seluruh dari dari semua aplikasi yang berjalan, dan secara otomatis mengurutkan dan melakukan pagination ulang dari hasil seluruh aplikasi.
+Semakin banyak data hasil pencarian, semakin berat, oleh karena itu hanya dibatasi sampai 10K, walaupun sebenarnya bisa kita naikkan angkanya, tapi tidak direkomendasikan.
+
+##Category Data
+Sekarang kita akan coba simulasi deep paging menggunakan data categories dari file categories.json
+
+
+#Categories 
+#Delete all categories
+POST http://localhost:9200/categories/_delete_by_query
+Content-Type: application/json
+
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+#Update mapping for categories
+PUT http://localhost:9200/categories/_mapping
+Content-Type: application/json
+
+{
+  "properties": {
+    "id": {
+      "type": "keyword"
+    }
+  }
+}
+
+#Bulk insert categories
+POST http://localhost:9200/_bulk
+Content-Type: application/json
+
+< categories.json
+
+#Deep paging problem
+#Search categories
+POST http://localhost:9200/categories/_search
+Content-Type: application/json
+
+{
+  "size": 100,
+  "from": 10000,
+  "query": {
+    "match_all": {}
+  }
+}
+
+#output
+{
+    "error":{
+        "type": "illegal_argument_exception",
+        "reason": "Result window is to large, from + size must be less than or equal to: [10000] but was [10100]. 
+        See the scroll api for mor efficient way to request large data sets. ...",
+    }
+    ...
+}
+
+
+##Scroll API
+Di Elasticsearch, untuk mengambil seluruh data pencarian, kita bisa menggunakan Scroll API.
+Namun penggunaan Scroll API sekarang sudah tidak direkomendasikan lagi, lebih direkomendasikan menggunakan Search After.
+https://www.elastic.co/guide/en/elasticsearch/reference/current/scroll-api.html 
+
+##Search After
+Lantas bagaimana jika kita ingin mengambil seluruh data pencarian? Misal untuk membuat dokumen CSV dari seluruh hasil pencarian.
+Pada kasus itu, kita bisa memanfaatkan fitur bernama Search After.
+Sederhananya, Search After akan selalu mengubah Query pencarian yang kita buat, sehingga hasil pencarian yang diambil akan selalu pencarian halaman pertama.
+Search after membutuhkan sorting, dan dari sorting kita bisa menggunakan nilai tersebut untuk melakukan query selanjutnya di Search After.
+
+#Search dengan sort
+#Search categories
+POST http://localhost:9200/categories/_search
+Content-Type: application/json
+
+{
+  "size": 100,
+  "from": 0,
+  "query": {
+    "match_all": {}
+  },
+  "sort": [
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ]
+}
+
+#output
+{
+    ...,
+    "Sort":{
+        "10087"             #gunakan sort value terakhir untuk search after 
+    }
+}
+
+#Search categories
+POST http://localhost:9200/categories/_search
+Content-Type: application/json
+
+{
+  "size": 100,              #selalu page pertama, sama seperti sebelumnya
+  "from": 0,
+  "query": {
+    "match_all": {}
+  },
+  "sort": [
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ],
+  "search_after": [
+    "10357"                 #nilai sort sebelumnya
+  ]
+}
+
+#output
+{
+    ...,
+    "Sort":{
+        "10176"             #gunakan untuk search after selanjutnya
+    }
+}

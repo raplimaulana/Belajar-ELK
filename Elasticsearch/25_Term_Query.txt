@@ -1,0 +1,81 @@
+### TERM QUERY ###
+Term Query adalah jenis query untuk mencari exact value, misal username, product id, harga, dan lain-lain.
+Term Query tidak begitu cocok jika digunakan untuk mencari di atribut dengan tipe data text, hal ini dikarenakan tipe data text memiliki text analisis yang bisa menyebabkan datanya jadi tidak sesuai dari yang awal, misal menjadikan lowercase otomatis, menghapus simbol otomatis, dan lain-lain.
+Sehingga tidak cocok jika menggunakan Term Query untuk tipe data text, lebih cocok menggunakan Match Query.
+
+#Term query
+#Select * from customer where gender = 'Female' limit 5 offset 0 order by username desc
+POST http://localhost:9200/customer/_search
+Content-Type: application/json
+
+{
+  "query" : {
+    "term" : {
+      "gender" : "Female"
+    }
+  },
+  "size" : 5,
+  "from" : 0,
+  "sort" : [
+    {
+      "username" : {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+#Term query pada text
+#Select * from customer where banks.name = 'BCA' limit 5 offset 0 order by username desc
+POST http://localhost:9200/customer/_search
+Content-Type: application/json
+
+{
+  "query" : {
+    "term" : {
+      "banks.name" : "BCA"
+    }
+  },
+  "size" : 5,
+  "from" : 0,
+  "sort" : [
+    {
+      "username" : {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+#Search customer where username IN ('username1', 'username2', 'username3')
+POST http://localhost:9200/customer/_search
+Content-Type: application/json
+
+{
+  "query": {
+    "terms": {
+      "username": [
+        "username1",
+        "username2",
+        "username3"
+      ]
+    }
+  }
+}
+
+#Search customer where banks.name IN ('BCA', 'BTN', 'BNI')
+POST http://localhost:9200/customer/_search
+Content-Type: application/json
+
+{
+  "query": {
+    "terms": {
+      "banks.name": [
+        "bca",
+        "btn",
+        "bni"
+      ]
+    }
+  }
+}
+

@@ -1,0 +1,50 @@
+### ALIAS ###
+
+##Kenapa Butuh Alias?
+Di Elasticsearch, terdapat fitur Alias (nama samaran) untuk Index yang sudah dibuat.
+Fitur Alias itu sangat berguna ketika kita tidak ingin membebankan Client untuk selalu mengubah nama Index ketika kita mengubah Index.
+Memang kenapa nama Index harus diubah?
+
+##Index Management
+Elasticsearch tidak seperti database lain, kita kita sudah terlanjut membuat atribut / field, maka kita tidak bisa menghapus atau mengubah atribut yang sudah terlanjur dibuat.
+Oleh karena itu, sering sekali di Elasticsearch kita akan membuat index baru ketika terjadi perubahan schema.
+Karena index baru harus dibuat, maka akan menyulitkan client ketika melakukan request, karena harus mengubah nama index dengan nama yang baru.
+Pada kasus seperti inilah, alias sangat cocok digunakan agar client tidak harus melakukan perubahan ketika terjadi perubahan nama index.
+
+client > alias > index
+client > alias > new index
+
+##Alias
+Untuk mengakses Alias, itu sama saja seperti mengakses Index. Jadi Elasticsearch akan mencari Alias terlebih dahulu, jika tidak ada, maka akan langsung mencari Index.
+Untuk membuat Alias, kita bisa menggunakan API :
+POST /_aliases
+
+Untuk menambah alias, kita bisa menggunakan action add, dan untuk menghapus alias kita bisa menggunakan action remove.
+
+#Create alias customer and order
+POST http://localhost:9200/_aliases
+Content-Type: application/json
+
+{
+  "actions" : [
+    {
+      "add" : {
+        "alias" : "customer",
+        "index" : "customers"
+      }
+    },
+    {
+      "add" : {
+        "alias" : "order",
+        "index" : "orders"
+      }
+    }
+  ]
+}
+
+#Get aliases
+GET http://localhost:9200/_aliases
+
+#Search customer and order
+GET http://localhost:9200/customer/_search
+GET http://localhost:9200/order/_search

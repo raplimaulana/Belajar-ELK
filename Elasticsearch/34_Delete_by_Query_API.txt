@@ -1,0 +1,40 @@
+### DELETE BY QUERY API ###
+Sebelumnya kita sudah bahas tentang Delete API menggunakan _id dokumen.
+Elasticsearch juga menyediakan API untuk menghapus dokumen menggunakan Query.
+API ini bisa berdampak ke banyak dokumen, artinya bisa menghapus banyak dokumen sekaligus.
+Kita bisa menggunakan API :
+POST /<index_name>/_delete_by_query
+Dan gunakan Query pada request body nya.
+
+#Delete by category
+#Insert salah category
+POST http://localhost:9200/categories/_doc/2
+Content-Type: application/json
+
+{
+  "name": "Salah"
+}
+
+#Insert salah category
+POST http://localhost:9200/categories/_doc/3
+Content-Type: application/json
+
+{
+  "name": "Salah Lagi"
+}
+
+#Search categories
+POST http://localhost:9200/categories/_search
+
+#Delete categories by query
+POST http://localhost:9200/categories/_delete_by_query
+Content-Type: application/json
+
+{
+  "query": {
+    "match": {
+      "name": "salah"
+    }
+  }
+}
+

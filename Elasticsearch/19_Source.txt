@@ -1,0 +1,28 @@
+### SOURCE ###
+
+##Source Field
+Seperti kita tahu, bahwa Elasticsearch menyimpan data dalam bentuk Apache Lucene Document Key-Value.
+Lantas bagaimana bisa Elasticsearch mengembalikan dalam bentuk response JSON utuh? Hal ini karena Elasticsearch menyimpan data dokumen JSON utuh dalam key _source di Lucene Document.
+Oleh karena itu jangan kaget jika ukuran data bisa dua kali lipat besarnya, karena memang selain semua atribut disimpan di Lucene Document, terdapat satu atribut _source yang berisi seluruh data JSON untuk nanti dikembalikan di response.
+
+#Search to products
+GET http://localhost:9200/order/_search
+
+*Sourcenya akan mengembalikan nilai integer seperti price, quantity dll sebagai string walaupun tipe datanya number.
+ Karena diawal dikirimkan sebagai string dulu, baru diconvert ke number.
+
+##Select Field
+Secara default, seluruh response di Elasticsearch akan mengembalikan seluruh JSON utuh dari atribut _source.
+Namun, Elasticsearch memiliki fitur untuk kita melakukan include atau exclude sehingga kita bisa memilih atribut mana yang perlu dikembalikan dalam response ketika kita menggunakan Get API dan Search API.
+Query parameter _source_includes, berisi field-field yang mau di include dalam response, dipisah menggunakan koma.
+Query parameter _source_excludes, berisi field-field yang mau di exclude dalam response, dipisah menggunakan koma.
+
+#Select source field
+#Select total, customer_id, items.product_d from order
+GET http://localhost:9200/order/_search?_source_includes=total,customer_id,items.product_id
+
+#Select *, exclude price from products
+GET http://localhost:9200/products/_search?_source_excludes=price
+
+#Select total, customer_id from order where _id = 1
+GET http://localhost:9200/order/_doc/1?_source_includes=total,customer_id

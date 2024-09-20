@@ -1,0 +1,60 @@
+### RESTORE ###
+
+##Restore
+Setelah membuat snapshot, kita bisa melakukan Restore snapshot ketika dibutuhkan.
+Restore tidak perlu dilakukan untuk seluruh index, kita bisa memilih index mana yang akan kita restore.
+Misal, kita akan coba delete semua data di index categories, lalu kita akan coba restore dari snapshot yang sudah kita buat.
+Untuk melakukan restore, kita bisa menggunakan API :
+POST /_snapshot/<nama_repository>/<nama_snapshot>/_restore
+
+#Restore snapshot
+### delete all categories
+POST http://localhost:9200/categories/_delete_by_query
+Content-Type: application/json
+
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+#Search categories
+POST http://localhost:9200/categories/_search
+
+#Close index categories
+POST http://localhost:9200/categories/_close
+
+#Restore categories
+POST http://localhost:9200/_snapshot/first_backup/snapshot1/_restore
+Content-Type: application/json
+
+{
+  "indices": [
+    "categories"
+  ]
+}
+
+#Open index categories
+POST http://localhost:9200/categories/_open
+
+#Search categories
+POST http://localhost:9200/categories/_search
+
+##Close dan Open
+Saat kita melakukan restore, Elasticsearch mewajibkan kita melakukan close Index.
+Close index digunakan untuk menutup index, sehingga proses read dan write akan ditolak. Jadi kita tidak bisa mengubah dokumen atau membaca dokumen.
+Ini diperlukan agar ketika proses restore berjalan, tidak ada perubahan yang terjadi sehingga mengakibatkan dokumen menjadi corrupt.
+Setelah selesai proses restore, kita bisa membuat kembali index menggunakan Open Index API.
+
+##Menghapus Snapshot
+Jika kita tidak membutuhkan lagi snapshot yang sudah kita buat, kita bisa menghapusnya menggunakan API :
+DELETE /_snapshot/<nama_repository>/<nama_snapshot>
+
+Atau jika ingin menghapus Repository dan Snapshot yang ada di dalamnya, kita bisa gunakan API :
+DELETE /_snapshot/<nama_repository>
+
+#Delete snapshot
+DELETE http://localhost:9200/_snapshot/first_backup/snapshot1
+
+#Delete repository
+DELETE http://localhost:9200/_snapshot/first_backup

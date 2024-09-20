@@ -1,0 +1,76 @@
+### SCORE ###
+
+##Score
+Secara default, saat kita melakukan Query ke Elasticsearch, hasil dari Query akan diurutkan berdasarkan Score.
+Score adalah hasil relevansi untuk Query pencarian yang kita kirim, semakin besar nilai Score, artinya menurut Elasticsearch, dokumen tersebut semakin relevan dengan request Query nya.
+Secara default, Elasticsearch menggunakan algoritma BM25 untuk menghitung score dari tiap dokumen.
+https://www.elastic.co/blog/practical-bm25-part-2-the-bm25-algorithm-and-its-variables 
+
+##TF-IDF
+Sebelum menggunakan BM25, Elasticsearch atau lebih tepatnya Apache Lucene, menggunakan TF-IDF untuk menghitung Score, namun hal ini sering disalahgunakan oleh user karena algoritma TF-IDF mudah dimodifikasi dengan data.
+Salah satunya, semakin banyak value yang dicari di dokumen, maka semakin relevan, contoh di Toko Online, banyak orang yang sering memasukkan kata-kata brand di deskripsi berkali-kali, agar hasil pencariannya mendapat Score tinggi.
+Namun dengan BM25, hal itu sudah tidak bisa dilakukan lagi.
+https://opensourceconnections.com/blog/2015/10/16/bm25-the-next-generation-of-lucene-relevation/ 
+
+##Explain API
+Jika kita ingin melihat bagaimana sebuah score dihitung pada dokumen, kita bisa menggunakan Query yang kita gunakan di Explain API
+Kita bisa mengirim Query yang kita lakukan, ke API :
+POST /<index_name>/_explain/<_id>
+
+#Explain score for customer username126
+POST http://localhost:9200/customer/_explain/username126
+Content-Type: application/json
+
+{
+  "query": {
+    "bool": {
+      "must" : [
+        {
+          "term" : {
+            "hobbies" : {
+              "value" : "gaming",
+              "boost" : 0
+            }
+          }
+        }
+      ],
+      "should": [
+        {
+          "term": {
+            "banks.name": "bca"
+          }
+        },
+        {
+          "term": {
+            "banks.name": "bni"
+          }
+        }
+      ],
+      "minimum_should_match" : 1
+    }
+  }
+}
+
+#output
+{
+    "_index": "customer_v2",
+    "_id": "username126",
+    "matched": true,
+    "explanation": {
+        "value": 3.902738,
+        "description": "sum of:",
+        "details": [
+            "value": 1.1357571,
+            "description": "weight(hobbies:gaming in 125) [PerFieldsSimilarity], ...,
+            "details": [
+                "value": 1.1357571,
+                "description": "score(freq=1.0), compute as boost * idf * tf from ...,
+                "details": [
+                    "value": 2.2,
+                    "description": "boost",
+                    "details": []
+                ]
+            ]
+        ]
+    } 
+}

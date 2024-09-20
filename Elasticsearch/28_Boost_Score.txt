@@ -1,0 +1,63 @@
+### BOOST SCORE ###
+Secara default, bobot tiap Query dalam menentukan nilai score (boost) adalah sama, yaitu 1.
+Jika kita ingin meningkatkan bobot nilai score pada salah satu query, kita bisa naikkan nilainya.
+Jika kita ingin menurunkan bobot nilai score pada salah satu query, kita bisa turunkan nilainya.
+Jika kita ingin menghapus nilai score untuk salah satu query, kita bisa beri nilai boost menjadi 0.
+
+#Search customer where (banks.name = 'bca' OR 'banks.name = 'bni)
+POST http://localhost:9200/customer/_search
+Content-Type: application/json
+
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "term": {
+            "banks.name": {
+              "value" : "bca",
+              "boost" : 0
+            }
+          }
+        },
+        {
+          "term": {
+            "banks.name": {
+              "value" : "bni",
+              "boost" : 2
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+#output
+{
+    "_index": "customer_v2",
+    "_id": "username126",
+    "matched": true,
+    "explanation": {
+        "value": 2.7669811,
+        "description": "sum of:",
+        "details": [
+          {
+            "value": 0.0,
+            "description": "ConstantScore(hobbies:gaming)^0.0",
+            "details": []
+          },
+            "value": 1.0251724,
+            "description": "weight(banks.name:bca in 125) [PerFieldsSimilarity], ...,
+            "details": [
+                "value": 1.0251724,
+                "description": "score(freq=1.0), compute as boost * idf * tf from ...,
+                "details": [
+                    "value": 2.2,
+                    "description": "boost",
+                    "details": []
+                ]
+            ]
+        ]
+    } 
+}

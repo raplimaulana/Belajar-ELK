@@ -1,0 +1,75 @@
+### DATA MODEL ###
+
+##Kenapa Perlu Mengerti Data Modeling
+Pindah dari relational database ke Elasticsearch bukanlah hal yang sesederhana hanya dengan memindahkan semua table ke index.
+Penggunaan Elasticsearch tidak akan mendatangkan manfaat besar jika kita tidak mengerti cara memodelkan data untuk kebutuhan aplikasi kita.
+Saat memodelkan data menggunakan relational database, biasanya kita mengacu ke database normalization.
+Saat memodelkan data menggunakan Elasticsearch, kita harus mengacu ke penggunaan aplikasi dalam melakukan pencarian data.
+
+##Schema yang Flexible
+Tidak seperti di relational database, di Elasticsearch kita bisa memasukkan data ke index secara langsung tanpa mendefinisikan schema index nya.
+Schema untuk index di Elasticsearch sangat flexible, namun setelah schema terbentuk, kita tidak bisa mengubah atribut yang sudah jadi, hanya boleh menambah atribut.
+Artinya jika di awal kita membuat atribut A dengan tipe number, kita tidak bisa menambahkan data baru dengan nilai atribut A bernilai text / string.
+Jadi berbeda dengan database MongoDB, yang tidak ada ketentuan nilai atribut di setiap dokumen nya.
+
+##Primary Key
+Saat membuat dokumen di Elasticsearch, kita wajib menambahkan primary key atau id.
+Tidak seperti relational database yang bebas membuat column untuk primary key, di MongoDB, primary key wajib menggunakan field _id.
+Selain itu primary key tidak bisa lebih dari 1 field, dan tipe _id adalah string, jadi kita bebas memasukan angka, tanggal, dan lain-lain, namun tetap akan disimpan dalam bentuk string.
+
+##Data Model
+Saat kita membuat schema index di Elasticsearch, terdapat dua sudut pandang pembuatan schema:
+- Embedded Document
+- Reference Document
+
+#Struktur Document Embedded
+- data.JSON
+{
+    "_id" : "123123123",
+    "name" : "rapli maulana:,
+    "address" : {                                   #Embedded Sub Document
+        "street" : "Jalan pasar inpress",
+        "city" : "Subang",
+        "country" : "Indonesia",
+    },
+    "contact" : {                                   #Embedded Sub Document
+        "email" : "rapli.aji@gmail.com",
+        "phone" : "08214510814"
+    },
+    "hobbies" : ["Coding", "Gaming", "Reading"]
+}
+
+#Struktur Document Reference
+- user.json
+{
+    "_id" : "rapli",                    #Document Reference
+    "name" : "Rapli Maulana Aji"
+}
+
+- address.json
+{
+    "_id" : "123123123",
+    "user_id" : "rapli",                #Document Reference
+    "street" : "Jalan pasar inpres",
+    "city" : "Subang",
+    "country" : "Indonesia",
+}
+
+- contact.json
+{
+    "_id" : "456456456",
+    "user_id" : "rapli",                #Document Reference
+    "email" : "rapli.aji@gmail.com",
+    "phone" : "08214510814"
+}
+
+##Embedded vs Reference
+Gunakan Embedded jika :
+- Antar document saling ketergantungan.
+- Embedded document selalu dibutuhkan ketika mengambil data document utama.
+
+Gunakan Reference jika :
+- Antar document bisa berdiri sendiri dan tidak terlalu ketergantungan satu sama lain.
+- Bisa melakukan manipulasi data langsung terhadap reference document.
+- Reference document tidak selalu dibutuhkan saat mengambil document.
+

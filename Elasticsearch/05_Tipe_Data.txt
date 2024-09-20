@@ -1,0 +1,58 @@
+### TIPE DATA ###
+
+##Tipe Data Dasar
+Elasticsearch mendukung banyak sekali tipe data.
+Di materi ini, kita hanya akan bahas tipe data yang dasar nya saja, karena sebenarnya tipe data di Elasticsearch masih banyak, terutama ketika kita belajar tentang Geospatial.
+
+##Tipe Data
+-------------------------------------------------------------------------------------
+| Tipe Data  |                           Keterangan                                 |
+|------------|----------------------------------------------------------------------|
+| binary     | data binary, dalam base64 encoded string                             |
+|------------|----------------------------------------------------------------------|
+| Date_nanos | true atau false                                                      |
+|------------|----------------------------------------------------------------------|
+| date       | tanggal dan waktu sampai ke milisecond                               |
+|------------|----------------------------------------------------------------------|
+| date_nanos | tanggal dan waktu sampai ke nanosecond                               |
+|------------|----------------------------------------------------------------------|
+| ip         | IPv4 atau IPv6                                                       |
+|------------|----------------------------------------------------------------------|
+| keyword    | text terstruktur, misal id, email, hostname, zipcode dan sejenisnya  |
+|------------|----------------------------------------------------------------------|
+| text       | text                                                                 |
+|------------|----------------------------------------------------------------------|
+| version    | data semantic version (https://semver.org/)                          |
+-------------------------------------------------------------------------------------
+
+##Tipe Data Numeric
+----------------------------------------------------------------------------------------
+| Tipe Data     |                           Keterangan                                 |
+|---------------|----------------------------------------------------------------------|
+| long          | 64 bit integer dengan jangkauan -2^63 sampai 2^62-1                  |
+|---------------|----------------------------------------------------------------------|
+| integer       | 32 bit integer dengan jangkauan -2^31 sampai 2^31-1                  |
+|---------------|----------------------------------------------------------------------|
+| short         | 16 bit integer dengan jangkauan -32768 sampai 32764                  |
+|---------------|----------------------------------------------------------------------|
+| byte          | 8 bit integer dengan jangkauan -128 sampai 127                       |
+|---------------|----------------------------------------------------------------------|
+| double        | 64 bit IEEE 754 floating point number                                |
+|---------------|----------------------------------------------------------------------|
+| float         | 32 bit IEEE 754 floating point number                                |
+|---------------|----------------------------------------------------------------------|
+| half_float    | setengah 16 bit IEEE floating point number                           |
+|---------------|----------------------------------------------------------------------|
+| scaled_float  | floating point number yang disimpan dalam long                       |
+|---------------|----------------------------------------------------------------------|
+| unsigned_long | 64 bit integer dengan jangkauan 0 sampai 2^64-1                      |
+----------------------------------------------------------------------------------------
+
+#Tipe Data Lainnya
+- Geopoint
+- Geoshape
+- Point
+- Shape
+- Rank
+- Token
+- Completion

@@ -1,0 +1,239 @@
+### BOOLEAN QUERY ###
+
+##Boolean Query
+Bagaimana jika kita ingin mencari pada beberapa field?
+Term dan Match digunakan untuk mencari ke satu field saja, jika kita ingin mencari ke beberapa field sekaligus, kita bisa kombinasikan menggunakan Boolean Query.
+
+##Boolean Query Field
+------------------------------------------------------------------------------------------
+| Occur    |                              Description                                    |
+|----------|-----------------------------------------------------------------------------|
+| must     | Query harus muncul di dokumen hasil, dan berkontribusi ke score             |
+|----------|-----------------------------------------------------------------------------|
+| filter   | Query harus muncul di dokumen hasil, dan namun tidak berkontribusi ke score |
+|----------|-----------------------------------------------------------------------------|
+| must_not | Query tidak boleh muncul di dokumen hasil                                   |
+|----------|-----------------------------------------------------------------------------|
+| should   | Query boleh muncul (tidak wajib) di dokumen hasil                           |
+------------------------------------------------------------------------------------------
+
+1. must
+   #Search customer where hobbies = 'gaming' AND banks.name = 'bca digital'
+   POST http://localhost:9200/customer/_search
+   Content-Type: application/json
+
+   {
+     "query": {
+       "bool": {
+         "must": [
+           {
+             "term": {
+               "hobbies": "gaming"
+             }
+           },
+           {
+             "match": {
+               "banks.name": {
+                 "query" : "bca digital",
+                 "operator" : "AND"             #karena 'bca' + 'digital', jika 'bca' saja operator tidak perlu digunakan
+               }
+             }
+           }
+         ]
+       }
+     }
+   }
+
+2. filter
+   #Search customer where hobbies = 'gaming' AND banks.name = 'bca'
+   POST http://localhost:9200/customer/_search
+   Content-Type: application/json
+
+   {
+     "query": {
+       "bool": {
+         "filter": [
+           {
+             "term": {
+               "hobbies": "gaming"
+             }
+           },
+           {
+             "match": {
+               "banks.name": {
+                 "query" : "bca digital",
+                 "operator" : "AND"
+               }
+             }
+           }
+         ]
+       }
+     },
+     "sort" : [
+       {
+         "username" : {
+           "order": "desc"
+         }
+       }
+     ]
+   }
+
+3. must_not
+   #Search customer where hobbies != 'gaming' AND banks.name != 'bca digital'
+   POST http://localhost:9200/customer/_search
+   Content-Type: application/json
+
+   {
+     "query": {
+       "bool": {
+         "must_not": [
+           {
+             "term": {
+               "hobbies": "gaming"
+             }
+           },
+           {
+             "match": {
+               "banks.name": {
+                 "query": "bca digital"
+               }
+             }
+           }
+         ]
+       }
+     }
+   }
+
+4. should (seperti or)
+   #Search customer where hobbies = 'GAMING' AND (banks.name = 'bca' OR 'banks.name = 'bni)
+   POST http://localhost:9200/customer/_search
+   Content-Type: application/json
+
+   {
+     "query": {
+       "bool": {
+         "must" : [
+           {
+             "term" : {
+               "hobbies" : "gaming"
+             }
+           }
+         ],
+         "should": [
+           {
+             "term": {
+               "banks.name": "bca"
+             }
+           },
+           {
+             "term": {
+               "banks.name": "bni"
+             }
+           }
+         ]
+       }
+     }
+   }
+
+##Minimum Should Match
+Saat kita menggunakan Boolean Query, dan hanya menggunakan should, tanpa must dan filter, secara default minimal hanya 1 kondisi di dalam should yang harus sesuai dengan dokumen.
+Namun ketika kita menambahkan must atau filter, maka nilai minimum should match nya jadi 0, yang artinya should nya tidak wajib.
+Jika kita ingin mengubahnya, kita harus menambah nilai untuk minimum should match.
+
+1. Must and should
+   #Search customer where hobbies = 'GAMING' AND (banks.name = 'bca' OR 'banks.name = 'bni)
+   #Customer yang tidak memiliki bank bca ataupun bni pun akan masuk, selama memiliki hobbies gaming
+   POST http://localhost:9200/customer/_search
+   Content-Type: application/json
+
+   {
+     "query": {
+       "bool": {
+         "must" : [
+           {
+             "term" : {
+               "hobbies" : "gaming"
+             }
+           }
+         ],
+         "should": [
+           {
+             "term": {
+               "banks.name": "bca"
+             }
+           },
+           {
+             "term": {
+               "banks.name": "bni"
+             }
+           }
+         ]
+       }
+     }
+   }
+
+2. Minimum should match 1
+   #Search customer where hobbies = 'GAMING' AND (banks.name = 'bca' OR 'banks.name = 'bni)
+   #Hanya customer yang memiliki hobbies gaming dan memiliki bank bca atau bank bni
+   POST http://localhost:9200/customer/_search
+   Content-Type: application/json
+
+   {
+     "query": {
+       "bool": {
+         "must" : [
+           {
+             "term" : {
+               "hobbies" : "gaming"
+             }
+           }
+         ],
+         "should": [
+           {
+             "term": {
+               "banks.name": "bca"
+             }
+           },
+           {
+             "term": {
+               "banks.name": "bni"
+             }
+           }
+         ],
+         "minimum_should_match" : 1
+       }
+     }
+   }
+
+3. Minimum should match 1
+   #Search customer where hobbies = 'GAMING' AND (banks.name = 'bca' OR 'banks.name = 'bni)
+   #Hanya customer yang memiliki hobbies gaming dan memiliki bank bca dan bank bni
+   POST http://localhost:9200/customer/_search
+   Content-Type: application/json
+
+   {
+     "query": {
+       "bool": {
+         "must" : [
+           {
+             "term" : {
+               "hobbies" : "gaming"
+             }
+           }
+         ],
+         "should": [
+           {
+             "term": {
+               "banks.name": "bca"
+             }
+           },
+           {
+             "term": {
+               "banks.name": "bni"
+             }
+           }
+         ],
+         "minimum_should_match" : 2
+       }
+     }
+   }

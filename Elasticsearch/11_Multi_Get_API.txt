@@ -1,0 +1,37 @@
+### MULTI GET API ###
+Elasticsearch juga menyediakan Multi Get API, yaitu API untuk mendapatkan beberapa dokumen secara sekaligus.
+Kita bisa menggunakan RESTful API :
+POST /_mget
+POST /<index_name>/_mget
+
+API ini bisa digunakan untuk mendapatkan dokumen dari beberapa index, sehingga cocok misal ketika butuh mengambil dokumen ke beberapa index sekaligus, sehingga lebih mudah karena bisa hanya melakukan sekali API Call saja.
+
+#Multiget document
+GET http://localhost:9200/products/_mget
+Content-Type: application/json
+
+{
+  "ids" : [
+    "1", "2"
+  ]
+}
+
+GET http://localhost:9200/_mget
+Content-Type: application/json
+
+{
+  "docs": [
+    {
+      "_id" : "1",
+      "_index": "orders"
+    },
+    {
+      "_id" : "rapli",
+      "_index": "customers"
+    },
+    {
+      "_id" : "3",
+      "_index": "products"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+### CREATE API ###
+Untuk menambahkan data ke Elasticsearch, kita bisa menggunakan Create API.
+Create API di Elasticsearch bersifat save, yang artinya jika dokumen dengan _id tersebut tidak ada, maka akan disimpan sebagai dokumen baru, namun jika sudah ada maka akan terjadi error conflict.
+Untuk menggunakan Create API, kita bisa menggunakan:
+POST/PUT /<index_name>/_create/<id>
+
+#Create new API
+POST http://localhost:9200/customers/_create/rapli
+Content-Type: application/json
+
+{
+  "name" : "rapli maulana aji",
+  "register_at" : "2024-10-10 00:00:00"
+}
+
+POST http://localhost:9200/products/_create/1
+Content-Type: application/json
+
+{
+  "name" : "Indomie Ayam Bawang",
+  "price" : "2000"
+}
+
+POST http://localhost:9200/products/_create/2
+Content-Type: application/json
+
+{
+  "name" : "Mie Sedap Soto",
+  "price" : 2000
+}
+
+POST http://localhost:9200/orders/_create/1
+Content-Type: application/json
+
+{
+  "order_date": "2023-09-09 00:00:00",
+  "customer_id": "rapli",
+  "total": "8000",
+  "items": [
+    {
+      "product_id": "1",
+      "price": "2000",
+      "quantity": "2"
+    },
+    {
+      "product_id": "2",
+      "price": "2000",
+      "quantity": "2"
+    }
+  ]
+}
+#Get mapping
+GET http://localhost:9200/customers/_mapping
+GET http://localhost:9200/products/_mapping
+GET http://localhost:9200/orders/_mapping

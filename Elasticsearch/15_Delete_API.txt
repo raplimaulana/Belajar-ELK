@@ -1,0 +1,21 @@
+### DELETE API ###
+Untuk menghapus dokumen yang sudah kita buat, kita bisa menggunakan Delete API.
+Untuk menggunakan Delete API, kita bisa menggunakan RESTful API :
+DELETE /<index_name>/_doc/<id>
+
+Jika dokumen yang dihapus tidak ditemukan, Elasticsearch akan mengembalikan response 404 Not Found
+
+#Insert customer spammer
+POST http://localhost:9200/customers/_create/spammer
+Content-Type: application/json
+
+{
+  "name" : "spammer",
+  "register_at" : "2023-10-10 00:00:00"
+}
+
+#Delete customer spammer
+DELETE http://localhost:9200/customers/_doc/spammer
+
+#Search customer
+GET http://localhost:9200/customers/_search

@@ -1,0 +1,76 @@
+### MATCH QUERY ###
+
+##Match Query
+Match Query sebenarnya sama dengan Term Query, yang membedakan adalah, Match Query akan menggunakan Text Analysis yang sama dengan atribut yang dicari.
+Maka dari itu, menggunakan tipe data Text, cocok menggunakan Match Query, karena secara otomatis akan menggunakan Text Analysis yang sama.
+Materi Text Analysis akan kita bahas di materi terpisah, karena materi ini lumayan kompleks.
+Karena Match Query akan menggunakan Text Analysis, oleh karena itu, cocok digunakan untuk data Text, tapi tetap Match Query juga bisa digunakan untuk semua tipe data.
+
+#Match query pada text
+#Select * from customer where banks.name = 'BCA' limit 10 offset 0 order by username desc
+POST http://localhost:9200/customer/_search
+Content-Type: application/json
+
+{
+  "query" : {
+    "match" : {
+      "banks.name" : "BCA"
+    }
+  },
+  "size" : 5,
+  "from" : 0,
+  "sort" : [
+    {
+      "username" : {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+*BCA Digital juga akan terpanggil
+
+##Standard Analyzer
+Tipe data Text, secara default akan menggunakan StandardAnalyser, sederhananya, ini adalah object yang digunakan untuk mengubah value asli, menjadi value yang bisa dicari dalam bentuk token-token yang lebih kecil (https://lucene.apache.org/core/9_7_0/core/org/apache/lucene/analysis/standard/StandardAnalyzer.html).
+Contoh, saat kita menggunakan value text eko@example.com, maka StandardAnalyzer akan mengubah menjadi rapli@example.com, hal ini secara otomatis kita bisa mencari menggunakan kata eko, example atau com.
+Untuk lebih detail, nanti akan dibahas di materi Text Analysis.
+
+##Match Query Operator
+Saat kita menggunakan Match Query, terdapat atribut bernama operator, yang bernilai OR atau AND, defaultnya adalah OR.
+Maka dari itu ketika kita mencari “bca digital”, maka StandardAnalyzer akan memecah menjadi “bca” OR “digital”, maka dari itu semua bank BCA atau bank BCA Digital akan keluar dari hasil pencarian.
+Jika kita ingin menggunakan “bca” AND “digital”, maka kita harus mengubah query operator nya menjadi AND.
+
+#Match query operator
+- banks.name = "BCA" 
+  banks.name = ["bca"]
+
+- banks.name = "BCA Digital" 
+  banks.name = ["bca", "digital"]
+
+- email = "RAPLI@example.COM"  
+  email = ["eko", "example", "com"]
+
+#Match query operator
+#Select * from customer where banks.name = 'BCA DIGITAL' limit 10 offset 0 order by username desc
+POST http://localhost:9200/customer/_search
+Content-Type: application/json
+
+{
+  "query" : {
+    "match" : {
+      "banks.name" : {
+        "query" : "BCA DIGITAL",
+        "operator" : "AND"
+      }
+    }
+  },
+  "size" : 5,
+  "from" : 0,
+  "sort" : [
+    {
+      "username" : {
+        "order": "desc"
+      }
+    }
+  ]
+}

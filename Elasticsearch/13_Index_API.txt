@@ -1,0 +1,46 @@
+### INDEX API ###
+
+##Index API
+Di Elasticsearch versi baru, untuk membuat dokumen, kita bisa menggunakan Create API.
+Namun, dahulu, membuat dokumen di Elasticsearch biasanya menggunakan Index API.
+Index API merupakan API yang sifatnya create or replace, yang artinya data tidak ada, maka akan di create, namun jika data sudah ada, maka akan di replace (dihapus dan dibuat baru).
+Pada Create API, jika dokumen sudah ada, maka akan terjadi error conflict, namun di Index API, hal itu tidak akan terjadi.
+Kita bisa menggunakan RESTful API :
+POST/PUT /<index_name>/_doc/<id> 
+
+#Index document
+POST http://localhost:9200/products/_doc/3
+Content-Type: application/json
+
+{
+  "name" : "Pop Mie Rasa Bakso",
+  "price": 2500
+}
+
+POST http://localhost:9200/products/_doc/4
+Content-Type: application/json
+
+{
+  "name" : "Samsung Galaxy S9+",
+  "price": 10000000
+}
+
+POST http://localhost:9200/products/_doc/5
+Content-Type: application/json
+
+{
+  "name" : "Acer Predator XXI",
+  "price": 25000000
+}
+
+#Get product 5
+GET http://localhost:9200/products/_doc/5
+
+#Search all products
+POST http://localhost:9200/products/_search
+
+##Pilih Create API atau Index API?
+Saat ini, kebanyakan programmer menggunakan Index API untuk menyimpan dokumen ke Elasticsearch.
+Hal ini karena Index API akan aman dari conflict ketika ternyata dokumen sudah tersedia di Elasticsearch.
+Namun jika memang kita tidak mau melakukan replace, maka kita harus menggunakan Create API, namun disarankan untuk menggunakan Get API untuk mengecek apakah dokumen sudah ada atau belum di Elasticsearch.
+

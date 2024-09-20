@@ -1,0 +1,69 @@
+### SNAPSHOT ###
+
+##Snapshot
+Snapshot adalah backup untuk Elasticsearch Cluster.
+Seluruh data akan di backup di snapshot.
+Kita bisa membuat snapshot untuk melakukan backup secara regular, jaga-jaga jika terjadi Hardware Failure, atau tidak sengaja menghapus Index.
+
+##Snapshot Repository
+Sebelum kita membuat snapshot, kita harus terlebih dahulu membuat Repository.
+Repository yaitu lokasi kita menyimpan snapshot.
+Elasticsearch mendukung banyak sekali lokasi Repository, seperti AWS S3, GCP Storage, Azure Storage dan lain-lain, namun pada materi ini kita akan bahas yang paling mudah, yaitu menggunakan File Storage, sehingga bisa kita lakukan di komputer kita.
+Untuk membuat lokasi Repository, kita perlu mengubah konfigurasi elasticsearch.yml, setelah kita kita harus melakukan restart Elasticsearch.
+
+#Configuration Repository
+#edit file config
+nano elasticsearch-8.9.1/config/elasticsearch.yaml
+
+cluster.name: cluster-rapli
+node.name: node-1
+xpack.security.enabled: false
+http.port: 9200
+path.data: data
+path.logs: logs
+path.repo: backup                   #lokasi repository = elasticsearch-8.9.1/backup/
+
+##Membuat Repository
+Untuk membuat Repository, kita bisa menggunakan API :
+PUT _snapshot/<nama_repository>
+
+#Create snapshot repository
+#Create snapshot repository
+PUT http://localhost:9200/_snapshot/first_backup
+Content-Type: application/json
+
+{
+  "type": "fs",
+  "settings": {
+    "location": "first_backup"      #folder akan dibuat di dalam folder path.repo (elasticsearch-8.9.1/backup/first_backup/)
+  }
+}
+
+#Get snapshot
+GET http://localhost:9200/_snapshot
+
+##Membuat Snapshot
+Untuk membuat snapshot, kita bisa menggunakan API :
+PUT /_snapshot/<nama_repository>/<nama_snapshot>
+
+Kita bisa melakukan backup seluruh index, atau menyebutkan index mana saja yang ingin di backup di Request Body.
+https://www.elastic.co/guide/en/elasticsearch/reference/current/create-snapshot-api.html 
+
+#Create snapshot
+#Create snapshot
+PUT http://localhost:9200/_snapshot/first_backup/snapshot1
+Content-Type: application/json
+
+{
+  "indices": [],
+  "metadata": {                                         #metadata diisi bebas dengan format key value
+    "taken_by": "eko",
+    "taken_because": "backup before upgradring"
+  }
+}
+
+#Get snapshot
+GET http://localhost:9200/_snapshot/first_backup/snapshot1
+
+#Cat api - get snapshot
+GET http://localhost:9200/_cat/snapshots?v

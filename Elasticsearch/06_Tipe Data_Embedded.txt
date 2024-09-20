@@ -1,0 +1,120 @@
+### TIPE DATA EMBEDDED ###
+
+##Tipe Data Embedded
+Saat kita membuat document di Elasticsearch, kita menggunakan format data JSON.
+Sedangkan, kita tahu bahwa di JSON, terdapat struktur embedded baik itu dalam bentuk Object, atau Array.
+Lantas pertanyaannya, bagaimana menentukan tipe data tersebut? Dan bagaimana Elasticsearch menangani atribut embedded.
+
+##Apache Lucene Document
+Elasticsearch menyimpan data dalam bentuk Apache Lucene Document.
+Lucene Document memiliki struktur data seperti Map<String, List<T>>, yang artinya Elasticsearch harus mengubah struktur data JSON yang kita simpan dalam bentuk Lucene Document.
+Karena Lucene Document itu bentuknya adalah Map (struktur data key-value), jadi sebenarnya Lucene Document tidak mendukung tipe data embedded.
+
+Lantas bagaimana jika dokumen yang kita buat dalam bentuk embedded JSON?
+Secara otomatis Elasticsearch akan mengkonversi ke Lucene Document.
+Mari kita lihat contohnya:
+
+1. Elasticsearch to lucene document
+   #Data elasticsearch (elasticsearch.json)
+   {
+       "_id" : "12345",
+       "first_name" : "Rapli",
+       "last_name" : "Maulana",
+       "email" : "rapli.aji@gmail.com",
+       "age" : "27"
+   }
+
+   #Konversi ke data lucene (lucene.doc)
+   {
+       "_id" : ["12345"],
+       "first_name" : ["Rapli"],
+       "last_name" : ["Maulana"],
+       "email" : ["rapli.aji@gmail.com"],
+       "age" : "27"
+   }
+
+2. Elasticsearch array to lucene document
+   #Data elasticsearch (elasticsearch.json)
+   {
+       "_id" : "12345",
+       "first_name" : "Rapli",
+       "last_name" : "Maulana",
+       "email" : "rapli.aji@gmail.com",
+       "age" : "27",
+       "hobbies" : ["Coding","Reading"]
+   }
+
+   #Konversi ke data lucene (lucene.doc)
+   {
+       "_id" : ["12345"],
+       "first_name" : ["Rapli"],
+       "last_name" : ["Maulana"],
+       "email" : ["rapli.aji@gmail.com"],
+       "age" : ["27"],
+       "hobbies" : ["Coding","Reading"]
+   }
+
+3. Elasticsearch embedded object to lucene document
+   #Data elasticsearch (elasticsearch.json)
+   {
+       "_id" : "12345",
+       "first_name" : "Rapli",
+       "last_name" : "Maulana",
+       "email" : "rapli.aji@gmail.com",
+       "age" : "27",
+       "hobbies" : ["Coding","Reading"],
+       "address: {
+          "street" : "Jalan pasar inpres",
+          "city" : "Subang",
+          "country" : "Indonesia" 
+       }
+   }
+
+   #Konversi ke data lucene (lucene.doc)
+   {
+       "_id" : ["12345"],
+       "first_name" : ["Rapli"],
+       "last_name" : ["Maulana"],
+       "email" : ["rapli.aji@gmail.com"],
+       "age" : "27",
+       "hobbies" : ["Coding","Reading"], 
+       "address.street" : ["Jalan pasar inpres"],
+       "address.city" : ["Subang"],
+       "address.country" : ["Indonesia"] 
+   }
+
+3. Elasticsearch array embedded object to lucene document
+   #Data elasticsearch (elasticsearch.json)
+   {
+       "_id" : "12345",
+       "first_name" : "Rapli",
+       "last_name" : "Maulana",
+       "email" : "rapli.aji@gmail.com",
+       "age" : "27",
+       "hobbies" : ["Coding","Reading"],
+       "address: [
+          {
+             "street" : "Jalan pasar inpres",
+             "city" : "Subang",
+             "country" : "Indonesia" 
+          },
+          {
+             "street" : "Jalan tegal rotan",
+             "city" : "Tangerang",
+             "country" : "Indonesia" 
+          },
+       ]
+   }
+
+   #Konversi ke data lucene (lucene.doc)
+   {
+       "_id" : ["12345"],
+       "first_name" : ["Rapli"],
+       "last_name" : ["Maulana"],
+       "email" : ["rapli.aji@gmail.com"],
+       "age" : "27",
+       "hobbies" : ["Coding","Reading"], 
+       "address.street" : ["Jalan pasar inpres", "Jalan tegal rotan"],
+       "address.city" : ["Subang", "Tangerang"],
+       "address.country" : ["Indonesia"] 
+   }

@@ -1,0 +1,20 @@
+### ELASTICSEARCH CLIENT ###
+Elasticsearch menggunakan RESTful API sebagai cara berkomunikasinya.
+Oleh karena itu, kita cukup menggunakan HTTP untuk berkomunikasi dengan Elasticsearch.
+Karena menggunakan HTTP, secara otomatis lebih mudah ketika kita belajar Elasticsearch.
+
+##Aplikasi HTTP Client 
+- Postman 
+  https://www.postman.com/ 
+
+- Insomnia 
+  https://insomnia.rest/ 
+
+- JetBrains HTTP Client 
+  https://www.jetbrains.com/help/idea/http-client-in-product-code-editor.html 
+
+- Visual Studio Code REST Client 
+  https://marketplace.visualstudio.com/items?itemName=humao.rest-client 
+
+- curl 
+  https://curl.se/ 

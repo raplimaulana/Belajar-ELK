@@ -1,0 +1,33 @@
+### INDEX ###
+Seperti yang dijelaskan di awal, bahwa di Elasticsearch, tidak ada konsep seperti database, jadi kita bisa langsung membuat index (atau tabel).
+Lantas bagaimana jika kita menggunakan Elasticsearch untuk lebih dari satu aplikasi? Salah satu praktek yang biasa dilakukan adalah, membuat nama index dengan nama depan aplikasinya, misalnya: namaaplikasi_namaindex.
+Dengan begitu nama index tidak akan bentrok antar aplikasi.
+
+##Membuat Index
+Untuk membuat Index, kita bisa menggunakan http call ke : 
+PUT /{nama_index}
+
+Aturan nama index adalah
+- harus lowercase.
+- tidak boleh menggunakan spesial karakter, kecuali -, + dan _, itu pun tidak boleh diawal.
+- Tidak boleh lebih dari 255 bytes.
+
+#create index
+PUT http://localhost:9200/customers
+PUT http://localhost:9200/products
+PUT http://localhost:9200/orders
+
+#show all indices
+GET http://localhost:9200/_cat/indices?v
+
+##Menghapus Index
+Untuk menghapus Index yang sudah kita buat, maka sangat mudah, kita bisa menggunakan HTTP Method DELETE.
+Menghapus Index secara otomatis akan menghapus seluruh data di Index tersebut.
+
+#delete index
+DELETE http://localhost:9200/customers
+DELETE http://localhost:9200/products
+DELETE http://localhost:9200/orders
+
+
+

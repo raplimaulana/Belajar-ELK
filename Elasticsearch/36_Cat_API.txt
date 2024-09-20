@@ -1,0 +1,19 @@
+### CAT API ###
+Compact and aligned text (CAT) APIs adalah API yang disediakan oleh Elasticsearch untuk melihat informasi yang terdapat di Elasticsearch.
+Misal informasi kesehatan, index, shard, nodes, dan lain-lain.
+API ini bukan digunakan untuk aplikasi (program yang kita buat), biasanya API ini digunakan untuk pengguna yang melakukan pemeliharaan Elasticsearch.
+Ada banyak sekali API dalam Cat API, kita bisa melihat semuanya di :
+GET /_cat
+https://www.elastic.co/guide/en/elasticsearch/reference/current/cat.html 
+
+#Cat API
+GET http://localhost:9200/_cat
+
+#Cat API - Indices
+GET http://localhost:9200/_cat/indices?v
+
+#Cat API - Aliases
+GET http://localhost:9200/_cat/aliases?v
+
+#Cat API - Nodes
+GET http://localhost:9200/_cat/nodes?v

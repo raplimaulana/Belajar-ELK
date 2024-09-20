@@ -1,0 +1,88 @@
+### MAPPING ###
+
+##Mapping
+Pada materi sebelumnya kita sudah bahas tentang Dynamic Mapping, sekarang kita bahas tentang pembuatan Mapping secara manual.
+Pada kenyataannya, penggunaan Dynamic Mapping biasanya jarang kita lakukan, karena biasanya ketika membuat Index, kita ingin menentukan schema sesuai dengan yang kita inginkan.
+Oleh karena itu, kita harus mampu dan mengerti cara membuat Mapping secara manual.
+
+##Properties
+Saat mengubah Mapping pada Index, kita bisa tambahkan properties, yang berisi informasi atribut dan tipe data atribut tersebut.
+Dengan begitu, secara otomatis ketika kita memasukkan dokumen ke Index, secara otomatis akan menggunakan tipe data yang sudah kita tentukan.
+
+#Mapping
+#Create index customers_v2
+PUT http://localhost:9200/customers_v2
+
+#Update mapping customers_v2
+PUT http://localhost:9200/customers_v2/_mapping
+Content-Type: application/json
+
+{
+  "numeric_detection": true,
+  "date_detection": true,
+  "dynamic_date_formats": [
+    "yyyy-MM-dd HH:mm:ss",
+    "yyyy-MM-dd",
+    "yyyy/MM/dd HH:mm:ss",
+    "yyyy/MM/dd"
+  ],
+  "properties": {
+    "username": {
+      "type": "keyword"
+    },
+    "first_name": {
+      "type": "text"
+    },
+    "last_name": {
+      "type": "text"
+    },
+    "email": {
+      "type": "keyword"
+    },
+    "gender": {
+      "type": "keyword"
+    },
+    "birth_date": {
+      "type": "date",
+      "format": "yyyy-MM-dd"
+    }
+  }
+}
+
+#Get mapping customers_v2
+GET http://localhost:9200/customers_v2/_mapping
+
+#switch alias customer from customers to customers_v2
+POST http://localhost:9200/_aliases
+Content-Type: application/json
+
+{
+  "actions" : [
+    {
+      "remove" : {
+        "alias" : "customer",
+        "index" : "customers"
+      }
+    },
+    {
+      "add" : {
+        "alias" : "customer",
+        "index" : "customers_v2"
+      }
+    }
+  ]
+}
+
+#Get aliases
+GET http://localhost:9200/_aliases
+
+#Bulk
+#Bulk insert customers
+POST http://localhost:9200/_bulk
+Content-Type: application/json
+
+< customers.json
+
+#Search customer
+GET http://localhost:9200/customer/_search
+

@@ -1,0 +1,31 @@
+### GET API ###
+
+##Get API
+Setelah kita menyimpan data ke Elasticsearch menggunakan Create API, kita bisa mengambil data yang sudah kita masukkan menggunakan Get API.
+Get API akan mengembalikan data dan informasi metadata-nya, seperti _id, nama index, versi dokumen, dan lain-lain.
+Jika ternyata data yang kita ambil tidak tersedia, maka HTTP Response Code nya akan mengembalikan 404 Not Found.
+Untuk menggunakan Get API, kita bisa menggunakan RESTful API :
+GET /<index_name>/_doc/<id>
+
+#Get mapping
+GET http://localhost:9200/customers/_mapping
+
+#Get document
+GET http://localhost:9200/customers/_doc/rapli
+
+##Get Source API
+Jika kita tidak mau mendapat metadata informasi dari dokumen yang kita ambil, kita bisa menggunakan Get Source API :
+GET /<index_name>/_source/<id>
+
+Secara otomatis akan mengembalikan seluruh data yang kita insert, tanpa informasi metadata nya, termasuk tanpa _id, karena _id sudah ada di URL dimana kita melakukan HTTP Call.
+
+#Get source document
+GET http://localhost:9200/customers/_source/rapli
+
+##Check Exists
+Pada beberapa kasus, kadang kita hanya ingin mengecek apakah dokumen ada di Index atau tidak. Sehingga kita tidak butuh isi data dari dokumen nya.
+Pada kasus seperti ini, kita bisa menggunakan Get API, namun menggunakan HTTP Method HEAD.
+Elasticsearch akan mengembalikan response 200 empty jika sukses, dan 404 Not Found jika data tidak ada.
+
+#Check document
+HEAD http://localhost:9200/customers/_doc/rapli

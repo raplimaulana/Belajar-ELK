@@ -1,0 +1,100 @@
+### FLATTENED FIELD ###
+
+##Flattened Field
+Secara default, setiap field akan disimpan sebagai key di Lucene Document.
+Elasticsearch memiliki tipe data flattened, yang digunakan sebagai alternatif cara menyimpan data di Lucene Document dengan cara mengambil semua value di semua child field, dan menyimpannya dalam satu key-value sebagai keyword.
+Ini cocok untuk kasus tipe data yang dinamis field nya, sehingga kita tidak perlu membuat mapping terlalu banyak.
+
+#Flattened
+#Update customer mapping
+PUT http://localhost:9200/customer/_mapping
+Content-Type: application/json
+
+{
+  "properties" : {
+    "labels" : {
+      "type": "flattened"
+    }
+  }
+}
+
+#get customer mapping
+GET http://localhost:9200/customer/_mapping
+
+
+#Update customer
+#Update customer username1
+POST http://localhost:9200/customer/_update/username1
+Content-Type: application/json
+
+{
+  "doc" : {
+    "labels" : {
+      "priority" : "vip",
+      "discount" : "10% discount",
+      "complaint": "always complaint"
+    }
+  }
+}
+
+#Update customer username2
+POST http://localhost:9200/customer/_update/username2
+Content-Type: application/json
+
+{
+  "doc" : {
+    "labels" : {
+      "priority" : "regular",
+      "verified" : "unverified",
+      "buy" : "never buy"
+    }
+  }
+}
+
+#Get customer username1 and username2
+GET http://localhost:9200/customer/_doc/username1
+GET http://localhost:9200/customer/_doc/username2
+
+
+#Search flattened field
+#Search vip customer
+POST http://localhost:9200/customer/_search
+Content-Type: application/json
+
+{
+  "query" : {
+    "term" : {
+      "labels": "regular"
+    }
+  }
+}
+
+
+##Flattened Object
+Selain menggunakan field tipe data flattened, kita juga bisa mencari nested field pada flattened object menggunakan . (titik), sama seperti object biasanya.
+Namun perlu diingat, karena tipe data flattened menyimpan semua data dalam tipe data keyword, artinya bisa dicari menggunakan Query dan juga di Sorting.
+Namun hati-hati dengan Sorting, karena datanya keyword, jadi akan diurutkan berdasarkan lexicographically, jadi bisa saja berbeda hasilnya kalo misal kita memiliki value number.
+
+#Flattened object Field
+#Search vip and regular customer
+POST http://localhost:9200/customer/_search
+Content-Type: application/json
+
+{
+  "query" : {
+    "bool" : {
+      "should" : [
+        {
+          "term" : {
+            "labels.priority" : "vip"
+          }
+        },
+        {
+          "term" : {
+            "labels.priority" : "regular"
+          }
+        }
+      ]
+    }
+  }
+}
