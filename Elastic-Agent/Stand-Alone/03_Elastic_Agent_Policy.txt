@@ -1,0 +1,49 @@
+### ELASTIC AGENT POLICY ###
+A policy is a collection of inputs and settings that defines the data to be collected by an Elastic Agent. 
+Each Elastic Agent can only be enrolled in a single policy.
+Within an Elastic Agent policy is a set of individual integration policies. 
+These integration policies define the settings for each input type. The available settings in an integration depend on the version of the integration in use.
+
+Fleet uses Elastic Agent policies in two ways:
+• Policies are stored in a plain-text YAML file and sent to each Elastic Agent to configure its inputs.
+• Policies provide a visual representation of an Elastic Agents configuration in the Fleet UI.
+
+##Install Apache Web Server 
+apt-get install apache2
+
+##Integration Apache to Elastic Agent 
+https://kibana.rapli.com:5601 > Management > Integrations > Search for integrations > Apache HTTP Server > Add Apache HTTP Server >
+
+Configure integration 
+Integration settings
+Integartion name                       : apache-1
+Collect logs from apache instances     : true 
+Apache access logs                     : true
+Paths                                  : /var/log/apache2/access.log*
+                                         /var/log/apache2/other_vhosts_access.log*
+                                         /var/log/httpd/access_log*
+Preserve original event                : false 
+Collect logs from third-party REST API : false 
+Collect metrics from Apache instances  : true 
+Where to add this integration?         : New hosts
+Create agent policy 
+New agent policy name                  : Agent policy 1
+Collect system log and metrics         : true 
+
+##Install Elastic Agent Apache on Server Apache 
+https://kibana.rapli.com:5601 > Management > Integrations > Search for integrations > Nginx > Integration Policies > Add Agent > Run Standalone > Configure the agent > Copy to clipboard 
+
+nano elastic-agent-8.17.2-linux-x86_64/elastic-agent.yml
+
+...
+*paste here 
+...
+
+##Restart Elastic Agent 
+/usr/bin/elastic-agent uninsntall
+elastic-agent-8.17.2-linux-x86_64/elastic-agent install 
+
+
+##Acces Integration Apache on Kibana 
+https://kibana.rapli.com:5601 > Management > Index Management > Data Streams 
+https://kibana.rapli.com:5601 > Analytics > Dashboard > Choose Default Dashboard Created > [Logs Apache] Acces and error logs

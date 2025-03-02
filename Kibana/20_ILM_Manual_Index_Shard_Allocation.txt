@@ -1,0 +1,194 @@
+### ILM MANUAL INDEX SHARD ALLOCATION ###
+
+##Index-level Shard Allocation Filtering
+You can use shard allocation filters to control where Elasticsearch allocates shards of a particular index. 
+These per-index filters are applied in conjunction with cluster-wide allocation filtering and allocation awareness.
+
+Shard allocation filters can be based on custom node attributes or the built-in _name, _host_ip, _publish_ip, _ip, _host, _id, _tier and _tier_preference attributes. 
+Index lifecycle management uses filters based on custom node attributes to determine how to reallocate shards when moving between phases.
+
+The cluster.routing.allocation settings are dynamic, enabling existing indices to be moved immediately from one set of nodes to another. 
+Shards are only relocated if it is possible to do so without breaking another routing constraint, such as never allocating a primary and replica shard on the same node.
+For example, you could use a custom node attribute to indicate a node’s performance characteristics and use shard allocation filtering to route shards for a particular index to the most appropriate class of hardware.
+
+##Check Available Node 
+http://localhost:5601 > Management > Dev Tools > Console 
+GET /_cat/nodes
+
+curl -u elastic:passwd123 -k -x GET https://node1.rapli.com:9200/_cat/nodes
+
+##Edit Config Elasticsearh
+#ssh node1 
+nano /etc/elasticsearch/elasticsearch.yml
+
+cluster.name: es-demo
+node.name: node1                           
+node.attr.my_identiier: alpha 
+path.data: /var/lib/elasticsearch 
+
+systemctl restart elasticsearch
+
+#ssh node2 
+nano /etc/elasticsearch/elasticsearch.yml
+
+cluster.name: es-demo
+node.name: node2                           
+node.attr.my_identiier: beta 
+path.data: /var/lib/elasticsearch 
+
+systemctl restart elasticsearch
+
+##Create Manual Indices 
+http://localhost:5601 > Management > Dev Tools > Console 
+PUT /demo-000001
+{
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "user": {
+          "type": "keyword"
+        },
+        "message": {
+          "type": "text"
+        }
+      }
+    },
+    "settings": {
+      "index.number_of_replicas": 0,
+      "index.number_of_shards": 1
+    }
+}
+
+GET /_cat/shards/demo-000001
+
+GET /demo-000001/_search
+
+##Create Document 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+POST /demo-000001/_doc
+{
+  "user": "john_doe",
+  "message": "My test",
+  "created_at": "2024-08-04T10:00:00Z"
+}
+
+##Change Sharding to Another Node
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT /demo-000001/_settings
+{
+  "index.routing.allocation.include._name": null
+  #"index.routing.allocation.include._name": "node1"
+}
+
+PUT /demo-000001/_settings
+{
+  "index.routing.allocation.include.my_identifier": "beta"
+}
+
+##Create Another Indices 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT /demo-000002
+{
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "user": {
+          "type": "keyword"
+        },
+        "message": {
+          "type": "text"
+        }
+      }
+    },
+    "settings": {
+      "index.number_of_replicas": 0,
+      "index.number_of_shards": 1
+    }
+}
+
+GET /_cat/shards/demo-000002
+
+POST /demo-000002/_doc
+{
+  "user": "john_doe",
+  "message": "My second record",
+  "created_at": "2024-08-04T10:00:00Z"
+}
+
+##Create Alias (demo = demo-000002)
+http://localhost:5601 > Management > Dev Tools > Console 
+
+POST _aliases
+{
+  "actions": [
+    {
+      "add": {
+        "index": "demo-*",
+        "alias": "demo"
+      }
+    },
+    {
+      "add": {
+        "index": "demo-000002",
+        "alias": "demo",
+        "is_write_index": true
+      }
+    }
+  ]
+}
+
+GET /demo/_search
+
+GET /demo-000002/_search
+
+##Create Document to Alias 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+POST /demo/_doc
+{
+  "user": "john_doe",
+  "message": "My fifth record",
+  "created_at": "2024-08-04T10:00:00Z"
+}
+
+##Setting Alias
+http://localhost:5601 > Management > Dev Tools > Console 
+
+GET _alias
+
+POST _aliases
+{
+  "actions": [
+    {
+      "add": {
+        "index": "demo-000002",
+        "alias": "demo",
+        "is_write_index": true
+      }
+    }
+  ]
+}
+
+##Delete Indices
+DELETE /demo-000001
+DELETE /demo-000002
+
+##Delete Alias
+POST _aliases
+{
+  "actions": [
+    {
+      "remove": {
+        "index": "demo-000002",
+        "alias": "demo"
+      }
+    }
+  ]
+}

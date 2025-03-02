@@ -1,0 +1,143 @@
+### EMAIL PACKETBEAT ALERT ###
+
+##Create Encrypted Key 
+#Cara 1
+nano /etc/kibana/kibana.yml 
+
+xpack.encryptedSavedObjects.encryptionKey: 1234567890ABC
+
+systemctl restart kibana
+
+#Cara  2
+/usr/share/kibana/bin/kibana-keystore keystore list
+/usr/share/kibana/bin/kibana-keystore keystore add xpack.encryptedSavedObjects.encryptionKey
+
+systemctl restart kibana
+
+##Create Rule to Warn Disk Usage
+https://kibana.rapli.com:5601 > Management > Rules and Connectors > Create rule 
+
+Name                                : http error 
+Check every                         : 1 minute 
+Notify                              : On check intervals
+Select rule type                    : STACK RULES (Elasticsearch query)
+Select a query type                 : KQL on Lucene
+Select a data view                  : DATA VIEW packetbeat-*
+Define your query                   : network.protocol: http and NOT (http.response.status_code >= 200 and http.response.status_code < 300)
+Set the threshold and time window   : IS ABOVE 1, FOR THE LAST 2 minutes
+Set the number of documents to send : SIZE 100
+Exclude matches from previous runs  : true 
+Actions 
+Select a connector type             : Server log 
+Create a connector
+Server log connector 
+Connector name                      : Notifications                       
+Notifications
+Run when                            : Query matched 
+Server log connector                : Notifications 
+Level                               : Error 
+Message                             : - AlertName '{{alertName}}' \
+                                      - Conditions Met: Exceeded 70% disk usage over {{params.timeWindowSize}}{{params.timeWindowUnit}} \
+                                      - Timestamp: {{context.date}} \
+                                      - Link: {{context.link}} \
+                                      - Hits: {{context.hits}}
+
+*Message ini akan mengambil dari log logstash yang dikirim 
+
+##Install Logstash 
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+sudo apt-get install apt-transport-https
+echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt-get update && sudo apt-get install logstash
+
+#Configure Logstash 
+nano /etc/logstash/logstash.conf 
+
+input {
+  file {
+    type => "json"
+    codec => "json"
+    path => "/var/log/kibana/kibana.log"
+    start_position => beginning 
+  }
+}
+filter {
+  grok {
+    match => {
+      "message" => "Server log: - AlertName: %{DATA:alertName};- Conditions Met: %{DATA:conditionsMet};- Timestamp: %{DATA:contextTime};- Link: %{DATA:link};- Hits: %{DATA:hitList};---"
+    }
+  }
+  mutate {
+    add_field => { "hitstring" => "[%{hitList}]" }
+    remove_field => [ "hitList" ]
+  }
+  json {
+    source => "hitstring"
+    target => "hits"
+  }
+  mutate {
+    remove_field => [ "hitstring" ]
+  }
+  ruby {
+    code => '
+      emailBody = ""
+      emailBody += "Conditions Met: " + event.get("conditionsMet") + "\n\n"
+      emailBody += "Link: " + event.get("link") + "\n\n"
+    
+      httpErrors = Hash.new
+      hitsAll = event.get("hits")
+      if hitsAll.is_a? Array
+        
+        hitsAll.each_index { |x|
+          hostName = hitsAll[x]["_source"]["host"]["name"]
+          if not httpErrors.has_key?(hostName)
+            httpErrors[hostName] = Hash.new
+          end
+      
+          httpResponseCode = hitsAll[x]["_source"]["http"]["response"]["status_code"]
+          if not httpErrors[hostName].has_key?(httpResponseCode)
+            httpErrors[hostName][httpResponseCode] = 0
+          end
+      
+          httpErrors[hostName][httpResponseCode] += 1
+        }
+        hitstring = ""
+        httpErrors.each do |hostName, httpCodes|
+           eachErrorCode = ""
+           httpCodes.each do |httpCode, errorCount|
+             eachErrorCode += "- " + httpCode.to_s + " (" + errorCount.to_s + ")"
+           end
+          hitstring += hostName + ":\n" + eachErrorCode+"\n"
+        end
+
+        emailBody += "Hits:\n" + hitstring + "\n\n"
+      end
+      event.set("[@metadata][emailBody]", emailBody)
+    '
+  }
+}
+output {
+  if[log][level] == "ERROR" {
+    email {
+      to => "user@example.com"
+      from => "user@example.com"
+      subject => "Alert: %{alertName}"
+      body => "%{[@metadata][emailBody]}\n\nRaw Message:\n%{message}"
+      authentication => "plain"
+      address => "smtp.mailtrap.io"
+      domain => "smtp.mailtrap.io"
+      port => 2525
+      username => "enter username"
+      password => "enter password"
+    }
+    stdout {
+      codec => line {
+        format => "%{[@metadata][emailBody]}"
+      }
+    }
+  }
+}
+
+#Restart Logstash
+/usr/share/logstash/bin/logstash -f /etc/logstash/logstash.conf 
+

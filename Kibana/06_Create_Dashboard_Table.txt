@@ -1,0 +1,27 @@
+### CREATE DASHBOARD TABLE ###
+
+##Create Table on Dashboard
+http://localhost:5601 > Analytics > Dashboard > Create new dashboard > Create visualizaton > Choose index metrics-* > 
+
+- Visualization type          : Choose 'Bar vertical stacked' and change to 'Data table'
+- Filter by type              : pod memory
+- Break down by               : Top values of Servicename 
+  - Select a function         : Top values
+  - Select field              : servicename
+  - Number of values          : 5
+  - Order by                  : Count of records 
+  - Order direction           : Descending 
+  - Display name              : Top values of Servicename 
+  - Group by this field first : true   
+  Break down by               : Top values of client_geo_cityname 
+- Metrics                     : Count of records 
+  Metrics                     : Maximum of Pod Memory 
+  - Select a function         : Maximum 
+  - Select field              : pod memory 
+  - Display name              : Maximum of Pod Memory 
+  - Value format              : default   
+  Metrics                     : Average of Container CPU
+  - Select a function         : Average
+  - Select field              : container cpu 
+  - Display name              : Maximum of Pod Memory 
+  - Value format              : Percent, Decimals 2  

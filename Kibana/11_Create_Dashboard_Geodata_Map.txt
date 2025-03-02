@@ -1,0 +1,16 @@
+### CREATE DASHBOARD GEODATA MAP ###
+
+##Create Geodata Map on Dashboard
+http://localhost:5601 > Analytics > Dashboard > Create new dashboard > Create new maps > Maps > Add layer > Documents >
+
+- Index pattern    : kibana_sample_data_logs 
+- Geospatial field : geo.cooridantes
+- Scaling          : Show clusters when results exceed 10000
+
+http://localhost:5601 > Analytics > Dashboard > Create new dashboard > Create new maps > Maps > Add layer > Choropleth
+
+- Boundaries source : Administrative boundaries from elastic maps service 
+- Layer             : World Counntries 
+- Join field        : ISO 3166-1 alpha-2 code 
+- Index pattern     : kibana_sample_data_logs
+- Join field        : geo.src

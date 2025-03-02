@@ -1,0 +1,9 @@
+### CREATE DASHBOARD STACKED BAR ###
+
+##Create Stacked bar on Dashboard
+http://localhost:5601 > Analytics > Dashboard > Create new dashboard > Create visualizaton > Choose index kibana_sample_data_logs > 
+
+- Visualization type        : Choose 'Bar vertical stacked' and change to 'Stacked bar'
+- Filter by type            : records 
+- X-axis                    : timestamp 
+- Y-axis                    : Count of records

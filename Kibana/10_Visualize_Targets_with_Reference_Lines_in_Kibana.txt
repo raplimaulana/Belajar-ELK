@@ -1,0 +1,35 @@
+### VISUALIZE TARGETS WITH REFFERENCE LINES IN KIBANA ###
+
+##Create Reference Line Static on Dashboard
+http://localhost:5601 > Analytics > Dashboard > Choose My Key Matric panel 1 > Settings > Edit lens > 
+
+- Area                 : metric* 
+- Horizontal axis      : @timestamp
+- Vertical axis        : Average of host.network.egress.bytes 
+- Add layer > Add reference layer 
+- Reference lines      : metric*
+- Vertical left axis   : choose 'Static value: ..." and change 
+  - Static
+  - Reference line value : 5120000
+  - Display name         : 5 MB 
+  - Decoration position  : auto 
+  - Line style           : Solid
+  - Fill                 : None
+
+##Create Reference Line Functions on Dashboard
+http://localhost:5601 > Analytics > Dashboard > Choose My Key Matric panel 2 > Settings > Edit lens > 
+
+- Area                 : metric* 
+- Horizontal axis      : @timestamp
+- Vertical axis        : Average of host.network.egress.bytes 
+- Add layer > Add reference layer 
+- Reference lines      : metric*
+- Vertical left axis   : choose '5 MB' and change
+  - Quick Funnctions
+  - Select a function    : Percentile
+  - Select a field       : host.network.egress.bytes 
+  - Percentile           : 95
+  - Display name         : 95%
+  - Decoration position  : auto 
+  - Line style           : Solid
+  - Fill                 : Above

@@ -1,0 +1,54 @@
+### INSTALL METRICBEAT ###
+Metricbeat is a lightweight shipper that you can install on your servers to periodically collect metrics from the operating system and from services running on the server. 
+Metricbeat takes the metrics and statistics that it collects and ships them to the output that you specify, such as Elasticsearch or Logstash.
+
+Metricbeat helps you monitor your servers by collecting metrics from the system and services running on the server, such as:
+- Apache
+- HAProxy
+- MongoDB
+- MySQL
+- Nginx
+- PostgreSQL
+- Redis
+- System
+- Zookeeper
+
+##Install Metricbeat  
+https://www.elastic.co/guide/en/beats/metricbeat/current/setup-repositories.html
+
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+sudo apt-get install apt-transport-https
+echo "deb https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt-get update && sudo apt-get install metricbeat
+sudo systemctl enable metricbeat
+sudo update-rc.d metricbeat defaults 95 10
+
+##Configure Metricbeat
+nano /etc/metricbeat/metricbeat.yml 
+
+metricbeat.config.modules:
+    path: ${path.config}/modules.d/*.yml 
+    reload.enabled: true 
+
+setup.template.settings:
+    index.number_of_shards:
+    index.codec: best_compression
+
+setup.dashboards.enabled: true
+
+setup.kibana:
+    hosts: "https://kibana.rapli.com:5601"
+
+output.elasticsearch:
+    hosts: ["https://elastic.rapli.com:9200"]
+    protocol: "https"
+    username: "elastic"
+    password: "password123"
+
+##Test Config Metricbeat 
+/usr/share/metricbeat/bin/metricbeat test config -c /etc/metricbeat/metricbeat.yml --path.home /usr/share/metricbeat --path.data /var/lib/metricbeat 
+/usr/share/metricbeat/bin/metricbeat test output -c /etc/metricbeat/metricbeat.yml --path.home /usr/share/metricbeat --path.data /var/lib/metricbeat 
+
+##Run Metricbeat 
+/usr/share/metricbeat/bin/metricbeat setup -c /etc/metricbeat/metricbeat.yml --path.home /usr/share/metricbeat --path.data /var/lib/metricbeat 
+systemctl enable metricbeat.service

@@ -1,0 +1,171 @@
+### EMAIL AUDITBEAT ALERT ###
+
+##Create Encrypted Key 
+#Cara 1
+nano /etc/kibana/kibana.yml 
+
+xpack.encryptedSavedObjects.encryptionKey: 1234567890ABC
+
+systemctl restart kibana
+
+#Cara  2
+/usr/share/kibana/bin/kibana-keystore keystore list
+/usr/share/kibana/bin/kibana-keystore keystore add xpack.encryptedSavedObjects.encryptionKey
+
+systemctl restart kibana
+
+##Create Rule to Failed Login Attempt
+https://kibana.rapli.com:5601 > Management > Rules and Connectors > Create rule 
+
+Name                                : failed login 
+Check every                         : 1 minute 
+Notify                              : On check intervals
+Select rule type                    : STACK RULES (Elasticsearch query)
+Select a query type                 : KQL on Lucene
+Select a data view                  : DATA VIEW auditbeat-*
+Define your query                   : event.dataset: "login" and event.outcome "failure"
+Set the threshold and time window   : IS ABOVE 1, FOR THE LAST 2 minutes
+Set the number of documents to send : SIZE 100
+Exclude matches from previous runs  : true 
+Actions 
+Select a connector type             : Server log 
+Create a connector
+Server log connector 
+Connector name                      : Notifications                       
+Notifications
+Run when                            : Query matched 
+Server log connector                : Notifications 
+Level                               : Error 
+Message                             : - AlertName '{{alertName}}' \
+                                      - Conditions Met: More than one failed login attempt {{params.timeWindowSize}}{{params.timeWindowUnit}} \
+                                      - Timestamp: {{context.date}} \
+                                      - Link: {{context.link}} \
+                                      - Hits: {{context.hits}}
+
+*Message ini akan mengambil dari log logstash yang dikirim 
+
+##Install Logstash 
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+sudo apt-get install apt-transport-https
+echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt-get update && sudo apt-get install logstash
+
+#Configure Logstash 
+nano /etc/logstash/logstash.conf 
+
+input {
+  file {
+    type => "json"
+    codec => "json"
+    path => "/var/log/kibana/kibana.log"
+    start_position => beginning 
+  }
+}
+filter {
+  grok {
+    match => {
+      "message" => "Server log: - AlertName: %{DATA:alertName};- Conditions Met: %{DATA:conditionsMet};- Timestamp: %{DATA:contextTime};- Link: %{DATA:link};- Hits: %{DATA:hitList};---"
+    }
+  }
+  mutate {
+    add_field => { "hitstring" => "[%{hitList}]" }
+    remove_field => [ "hitList" ]
+  }
+  json {
+    source => "hitstring"
+    target => "hits"
+  }
+  mutate {
+    remove_field => [ "hitstring" ]
+  }
+  ruby {
+    code => '
+      emailBody = ""
+      emailBody += "Conditions Met: " + event.get("conditionsMet") + "\n\n"
+      emailBody += "Link: " + event.get("link") + "\n\n"
+      hitsAll = event.get("hits")
+      if hitsAll.is_a? Array
+
+        # remove duplicates
+        hits = Array.new
+        found = Array.new
+        hitsAll.each_index { |x|
+          if not found.include?(hitsAll[x]["_source"]["host"]["name"])
+            hits << hitsAll[x]
+            found << hitsAll[x]["_source"]["host"]["name"]
+          end
+        }
+
+        # construct hitlist for emailBody
+        hitstring = ""
+        hits.each_index { |x|
+          hostname = hits[x]["_source"]["host"]["name"]
+          detail = ""
+
+          # package change
+          if event.get("alertName") == "package change"
+            packages = ""
+            hitsAll.each_index { |y|
+              if hitsAll[y]["_source"]["host"]["name"] == hostname
+                package = hitsAll[y]["_source"]["system"]["audit"]["package"]["name"]
+                packages = package.nil? ? packages : packages + ( package.nil? ? "" : " - " + package + "\n" )
+              end
+            }
+            detail = packages.nil? || packages.length < 1 ? "" : " - Modified Packages:\n" + packages
+
+          # failed login
+          elsif event.get("alertName") == "failed login"
+            failCount = Hash.new
+            hitsAll.each_index { |y|
+              username = hitsAll[y]["_source"]["user"]["name"]
+              if hitsAll[y]["_source"]["host"]["name"] == hostname
+                if !username.nil? && !failCount.key?(username)
+                  failCount[username] = 0
+                end
+                failCount[username] += 1
+              end
+            }
+            failures = ""
+            failCount.each do |key, value|
+              failures = failures + key + " (" + value.to_s + ")\n"
+            end
+            detail = failures.length < 1 ? "" : " - Failed Attempts By:\n" + failures
+
+          # etc...
+          elsif event.get("alertName") == "something else"
+            detail = "something else"
+          end
+
+          hitstring += "#{hostname}#{detail}\n"
+        }
+        emailBody += "Hits:\n" + hitstring + "\n\n"
+      end
+      event.set("[@metadata][emailBody]", emailBody)
+    '
+  }
+}
+output {
+  if[log][level] == "ERROR" {
+    email {
+      to => "user@example.com"
+      from => "user@example.com"
+      subject => "Alert: %{alertName}"
+      body => "%{[@metadata][emailBody]}\n\nRaw Message:\n%{message}"
+      authentication => "plain"
+      address => "smtp.mailtrap.io"
+      domain => "smtp.mailtrap.io"
+      port => 2525
+      username => "enter username"
+      password => "enter password"
+    }
+    stdout {
+      codec => line {
+        format => "%{[@metadata][emailBody]}"
+      }
+    }
+  }
+}
+
+#Restart Logstash
+/usr/share/logstash/bin/logstash -f /etc/logstash/logstash.conf 
+

@@ -1,0 +1,59 @@
+### INTRODUCTION KIBANA ###
+http://localhost:5601 > Login > Create deployment > My deployment
+
+• Observability 
+  - APM 
+    Trace transaction through a distributed architecture and map your services interactions to easily spot performance bottleneck
+
+  - Metrics (Metricbeat)
+    Analiyze metrics from your infrastructure, apps and services. 
+    Discover trends, forecast behavior, get alerts on anomalies, and more.
+
+  - Uptime (Heartbeat)
+    Proactively monitor availability of your sites and services.
+    Receive alerts and resolve issues faster to optimize your users experience.
+
+  - User experience (RUM agent)
+    Performance is a distribution.
+    Measure the experiences of allvisitor to your web application and understand how to improve the experience for everyone.
+
+  - No alert found
+    Are 503 errors stacking up?
+    Are services responding?
+    Is CPU and RAM utilization jumping?
+    See warning as they...
+
+• Security 
+  - Detect
+  - Explore  
+  - Investigate
+  - Manage
+
+• Analytics 
+  - Discover 
+  - Dashboard 
+  - Canvas 
+  - Maps
+  - Machine Learning
+  - Graph 
+  - Visualize Library
+
+##Install Kibana 
+curl -O https://artifacts.elastic.co/downloads/kibana/kibana-8.17.2-linux-x86_64.tar.gz
+curl https://artifacts.elastic.co/downloads/kibana/kibana-8.17.2-linux-x86_64.tar.gz.sha512 | shasum -a 512 -c - 
+tar -xzf kibana-8.17.2-linux-x86_64.tar.gz
+cd kibana-8.17.2/ 
+
+##Config Kibana 
+nano /etc/kibana/kibana.yml
+
+xpack.encryptedSavedObjects.encryptionKey: 1234567890
+server.port: 5601
+server.host: 0.0.0.0
+server.publicBaseUrl: "https://kibana.rapli.com:5601"
+server.ssl.enabled: true 
+server.ssl.certificate: /etc/kibana/certs/kibana.rapli.com/fullchain.pem
+server.ssl.key: /etc/kibana/certs/kibana.rapli.com/privkey1.pem
+
+##Start Kibana 
+systemctl start kibana 

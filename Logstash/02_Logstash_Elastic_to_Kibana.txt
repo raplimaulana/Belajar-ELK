@@ -1,0 +1,36 @@
+### LOGSTASH ELASTIC TO KIBANA ###
+#Stashing event
+Data Source > Logstash Pipeline (Input, Filter, Outputs) > Elasticsearch 
+
+nano elasticsearch.yml
+xpack.security.enable: false
+xpack.security.enrollment.enabled: false 
+
+xpack.security.http.ssl:
+    enabled: false 
+    keystore.path: certs/http.p12
+
+xpack.security.transport.ssl:
+    enabled: false 
+    verification_mode: certificate
+    keystore.path: certs/transport.p12
+    truststore.patj: certs/transport.p12
+
+cluster.initial_master_nodes: ["DEKSTOP-BDG00U7"]
+
+http.host: 0.0.0.0
+
+elasticsearch.hosts: ["http://localhost:9200"]
+nano logstash.conf
+input {
+    file {
+        path => "C:/Users/rapli/folder-log/app.log"
+        start_position => "beginning"
+    }
+}
+
+output {
+    elasticsearch {
+        hosts => ["http://localhost:9200"]
+    }
+}

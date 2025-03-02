@@ -1,0 +1,92 @@
+### KIBANA DASHBOARD ###
+https://kibana.rapli.com:5601 > Management > Index Management > Data Streams 
+https://kibana.rapli.com:5601 > Observability > Monitors
+https://kibana.rapli.com:5601 > Analytics > Dashboard > Choose Default Dashboard Created > New ECS
+
+##Create Role 
+https://kibana.rapli.com:5601 > Management > Roles > Create role > 
+
+Role name           : heartbeat-user
+Elasticsearch    
+Cluster privileges  : monitor, read_ilm
+Index privileges    
+Indices             : heartbeat-*
+privileges          : create_doc 
+
+##Create Data View 
+https://kibana.rapli.com:5601 > Management > Data Views > Create data view
+
+name                : heartbeat-*
+index pattern       : heartbeat-*
+Yimestamp field     : @timestamp 
+
+
+##Create User 
+https://kibana.rapli.com:5601 > Management > Users > Create user 
+
+Profile
+Username            : heartbeat-publisher 
+Full name           : heartbeat-publisher
+Email address       : rapli.maulana@gmail.com 
+Password 
+Password            : password123
+Confirm password    : password123
+Privileges          
+Roles               : heartbeat-user, editor
+
+##Change User Password in Heartbeat Config 
+#Generate key
+https://kibana.rapli.com:5601 > Management > Dev Tools 
+
+Post /_security/api_key/grant 
+{
+    "grant_type": "password",
+    "username": "heartbeat-publisher",
+    "password": "password123",
+    "api_key": {
+        "name": "heartbeat-publisher"
+    }
+}
+
+{
+    "id": "huwegkba438al9a",
+    "name": "heartbeat-publisher",
+    "api_key": "uhq3nja4iano2-uh43",
+    "encoded": "8y1hbojqjiafbj98q35onah4291ansd=="
+}
+
+#Configure Heartbeat
+nano /etc/heartbeat/heartbeat.yml 
+
+output.elasticsearch:
+    hosts: ["elastic.rapli.com:9200"]
+    protocol: "https"
+    api_key: "${ES_API_KEY}"
+
+/usr/share/heartbeat/bin/heartbeat keystore add ES_API_KEY -c /etc/heartbeat/heartbeat.yml --path.home /usr/share/heartbeat --path.data /var/lib/heartbeat 
+huwegkba438al9a:uhq3nja4iano2-uh43
+
+##Acces Heartbeat on Kibana 
+https://kibana.rapli.com:5601 > Observability > Overview > Metrics
+
+https://kibana.rapli.com:5601 > Observability > Monitors > Name Monitor Server (e.g. Apache Website) > Investigate > Show host logs > *Jika membuka isinya, kita tidak perlu install filebeat 
+
+https://kibana.rapli.com:5601 > Observability > Inventory > *Perlu install filebeat atau metricbeat terlebih dahulu 
+
+nano /etc/filebeat/modules.d/system.yml 
+
+- module: system 
+  syslog:
+    enabled: true 
+
+auth: 
+  enabled: true 
+
+nano /etc/filebeat/modules.d/apache.yml 
+
+- module: apache
+  access:
+    enabled: true 
+
+error: 
+  enabled: true 

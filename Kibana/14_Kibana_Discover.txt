@@ -1,0 +1,27 @@
+### KIBANA DISCOVER ###
+
+##Explore on Discover
+http://localhost:5601 > Analytics > Discover > Choose index kibana_sample_data_logs 
+
+##Create filter 
+http://localhost:5601 > Analytics > Discover > Choose index kibana_sample_data_logs > Add filter > 
+
+- Field               : geo.src
+  Operator            : is
+  Value               : JP 
+  Create custom label : false
+
+- Field               : extension
+  Operator            : is one of
+  Value               : zip, gz
+  Create custom label : true 
+  Custom label        : Compressed 
+
+*Kita juga bisa langsung melakukan filter dari table data 
+ - Filter for value = setara operator is 
+ - Filter out value = setara operator is not 
+ 
+##Search Data 
+http://localhost:5601 > Analytics > Discover > Choose index kibana_sample_data_logs > Search > 
+
+- geo.src: JP and response:404

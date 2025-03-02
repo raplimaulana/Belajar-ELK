@@ -1,0 +1,88 @@
+### EMAIL ALERT VIA INDEX CONNECTOR ###
+
+##Create Index 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT /kibanaalert 
+
+http://localhost:5601 > Management > Index Management > Indices > kibanaalert 
+
+##Create Mapping
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT /kibanalert/_mapping
+{
+    "properties": {
+        "alert_id": {
+            "type": "keyword"
+        },
+        "date": {
+            "type": "date"
+        },
+        "reason": {
+            "type": "text"
+        },
+        "rule_id": {
+            "type": "keyword"
+        },
+        "service_name": {
+            "type": "text"
+        }
+    }
+}
+
+GET /kibanalert/_mapping
+or http://localhost:5601 > Management > Index Management > Indices > kibanaalert > mappings 
+
+##Create Alerts
+http://localhost:5601 > Observability > Alerts > Manage Rules > Create rule >
+
+Name                                : Error Count
+Check every                         : 1 minute 
+Notify                              : Every time alert is active
+Select rule type                    : Error count threeshold 
+Actions
+Select a connector type             : Index
+Create a connector
+Index connector 
+Connector name                      : connector-2                      
+Index                               : kibanaalert 
+Refresh Index                       : true 
+Define time field for each document : true
+Document to index                   : {
+                                         "alert_id": "{{alert.id}}",
+                                         "rule_id": "{{rule.id}}",
+                                         "reason": "{{context.reason}}",
+                                         "service_name": "{{context.serviceName}}",
+                                         "date": "{{date}}"
+                                      }
+
+Notifications
+Run when                : Threshold met
+Server log connector    : connector-1 
+Level                   : Fatal 
+Message                 : - {{alertName}} alert is firing  because ofthe following conditions: \
+                          - Service name: {{context.serviceName}}
+                          - Environment: {{context.environment}}
+                          - Threshold: {{context.threshold}}
+                          - Triggered value: {{context.triggerValue}} errors over the last {{context.interval}}
+
+
+##Get Indices kibanalert
+http://localhost:5601 > Management > Dev Tools > Console 
+
+GET /kibanalert/_search
+
+##Create an Alert User on Kibana
+http://localhost:5601 > Management > Dev Tools > Console 
+
+POST /_security/api_key/grant
+
+{
+  "grant_type": "password",
+  "username": "alert-reader",
+  "password": "anything",
+  "api_key": {
+    "name": "alert-reader-key"
+  }
+}

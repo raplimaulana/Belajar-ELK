@@ -1,0 +1,95 @@
+### EMAIL HEARTBEAT ALERT ###
+
+##Create Encrypted Key 
+#Cara 1
+nano /etc/kibana/kibana.yml 
+
+xpack.encryptedSavedObjects.encryptionKey: 1234567890ABC
+
+systemctl restart kibana
+
+#Cara  2
+/usr/share/kibana/bin/kibana-keystore keystore list
+/usr/share/kibana/bin/kibana-keystore keystore add xpack.encryptedSavedObjects.encryptionKey
+
+systemctl restart kibana
+
+##Create Rule to Failed Login Attempt
+https://kibana.rapli.com:5601 > Management > Rules and Connectors > Create rule 
+
+Name                                : monitor uptime 
+Check every                         : 1 minute 
+Notify                              : On check intervals
+Select rule type                    : Uptime monitor status 
+Status check                        : true 
+                                      ANY MONITOR IS DOWN > 5 times
+                                      WITHIN last 15 minutes 
+Availability                        : false 
+                                      ANY MONITOR IS UP IN < 99% of checks 
+                                      WITHIN THE LAST 30 days
+Actions 
+Select a connector type             : Server log 
+Create a connector
+Server log connector 
+Connector name                      : Notifications                       
+Notifications
+Run when                            : Uptime Down Monitor
+Server log connector                : Notifications 
+Level                               : Info
+Message                             : Monitor {{context.monitorName}} with url {{{context.monitorUrl}}} from {{context.observerLocation}} {{{context.statusMessage}}} The latest error message is {{{context.latestErrorMessage}}}
+#Level                              : Error 
+#Message                            : - AlertName: {{rule.name}} \
+                                      - MonitorName: {{context.monitorName}} \
+                                      - Reason: The url {{context.monitorUrl}} from {{context.observerLocation}} {{context.statusMessage}} is down \
+                                      - LastErrorMessage: {{context.latestErrorMessage}}
+*Message ini akan mengambil dari log logstash yang dikirim 
+
+##Install Logstash 
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+sudo apt-get install apt-transport-https
+echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt-get update && sudo apt-get install logstash
+
+#Configure Logstash 
+nano /etc/logstash/logstash.conf 
+
+input {
+  file {
+    type => "json"
+    codec => "json"
+    path => "/var/log/kibana/kibana.log"
+    start_position => beginning
+  }
+}
+filter {
+  grok {
+    match => {
+      "message" => "Server log: - AlertName: %{DATA:alertName};- MonitorName: %{DATA:monitorName};- Reason: %{DATA:reason};- LastErrorMessage: %{DATA:lastErrorMessage};---"
+    }
+  }
+}
+output {
+  if[log][level] == "ERROR" {
+    email {
+      to => "user@example.com"
+      from => "user@example.com"
+      subject => "Alert: %{alertName} - %{monitorName}"
+      body => "Reason:\n%{reason}\n\nLast Error Message:\n%{lastErrorMessage}\n\nRaw Message:%{message}"
+      authentication => "plain"
+      address => "smtp.mailtrap.io"
+      domain => "smtp.mailtrap.io"
+      port => 2525
+      username => "enter username"
+      password => "enter password"
+    }
+    stdout {
+      codec => line {
+        format => "%{message}"
+      }
+    }
+  }
+}
+
+#Restart Logstash
+/usr/share/logstash/bin/logstash -f /etc/logstash/logstash.conf 
+

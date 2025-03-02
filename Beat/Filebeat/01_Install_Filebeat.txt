@@ -1,0 +1,101 @@
+### INSTALL FILEBEAT ###
+Filebeat is a lightweight shipper for forwarding and centralizing log data. 
+Installed as an agent on your servers, Filebeat monitors the log files or locations that you specify, collects log events, and forwards them either to Elasticsearch or Logstash for indexing.
+
+Here’s how Filebeat works: When you start Filebeat, it starts one or more inputs that look in the locations you’ve specified for log data. 
+For each log that Filebeat locates, Filebeat starts a harvester. Each harvester reads a single log for new content and sends the new log data to libbeat, which aggregates the events and sends the aggregated data to the output that you’ve configured for Filebeat.
+
+##Install Filebeat  
+https://www.elastic.co/guide/en/beats/filebeat/current/setup-repositories.html
+
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+sudo apt-get install apt-transport-https
+echo "deb https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt-get update && sudo apt-get install filebeat
+sudo systemctl enable filebeat
+
+##Configure Filebeat
+nano /etc/filebeat/filebeat.yml 
+
+filebeat.inputs:
+- type: filestream
+  id: my-filestream-id
+  enabled: true
+  paths:
+    - /var/log/*.log
+    #- c:\programdata\elasticsearch\logs\*
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: true
+  reload.period: 10s
+
+setup.template.settings:
+  index.number_of_shards: 1
+
+setup.dashboards.enabled: true
+
+setup.kibana:
+  host: "https://kibana.rapli.com:5601"
+
+output.elasticsearch:
+  hosts: ["https://elastic.rapli.com:9200"]
+  protocol: "https"
+  username: "elastic"
+  password: "password123"
+  
+##Configure Module Apache
+nano /etc/filebeat/modules.d/apache.yml
+
+# Module: apache
+# Docs: https://www.elastic.co/guide/en/beats/filebeat/8.5/filebeat-module-apache.html
+
+- module: apache
+  # Access logs
+  access:
+    enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+
+  # Error logs
+  error:
+    enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+
+##Configure Module System
+nano /etc/filebeat/modules.d/system.yml
+
+# Module: system
+# Docs: https://www.elastic.co/guide/en/beats/filebeat/8.5/filebeat-module-system.html
+
+- module: system
+  # Syslog
+  syslog:
+    enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+
+  # Authorization logs
+  auth:
+    enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+
+
+
+##Test Config Filebeat 
+/usr/share/filebeat/bin/filebeat test config -c /etc/filebeat/filebeat.yml --path.home /usr/share/filebeat --path.data /var/lib/filebeat 
+/usr/share/filebeat/bin/filebeat test output -c /etc/filebeat/filebeat.yml --path.home /usr/share/filebeat --path.data /var/lib/filebeat 
+
+##Run Filebeat 
+/usr/share/filebeat/bin/filebeat setup -c /etc/filebeat/filebeat.yml --path.home /usr/share/filebeat --path.data /var/lib/filebeat 
+systemctl enable filebeat.service

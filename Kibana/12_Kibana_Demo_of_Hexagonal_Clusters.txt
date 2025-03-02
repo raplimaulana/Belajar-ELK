@@ -1,0 +1,15 @@
+### KIBANA DEMO OF HEXAGONAL CLUSTERS ###
+
+##Add layer OSM points
+http://localhost:5601 > Analytics > Maps > LAYERS > Add layer > Documents > Data view = OSM, Geospatial field = location
+
+##Add layer OSM shape
+http://localhost:5601 > Analytics > Maps > LAYERS > Add layer > Documents > Data view = OSM, Geospatial field = shape
+
+##Add layer OSM 
+http://localhost:5601 > Analytics > Maps > LAYERS > Add layer > Clusters > Data view = OSM, Cluster field = locations, Show as = Grids
+
+##Save Template 
+http://localhost:5601 > Analytics > Maps > Save > Title = GeoTile and GeoHex, New > Save and go to dashboard
+http://localhost:5601 > Analytics > Dashboard > Choose GeoTile and GeoHex panel > Settings > Clone panel 
+http://localhost:5601 > Analytics > Dashboard > Choose GeoTile and GeoHex panel > Settings > More > Syncronize map movement         #supaya ketika menggerakan di satu panel, semua panel ikut bergerak 

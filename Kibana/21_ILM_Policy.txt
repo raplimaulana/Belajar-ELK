@@ -1,0 +1,230 @@
+### ILM POLICY ###
+Index lifecycle is used to avoid increased disk usage and reliability issues, address any cluster health problems in a timely fashion.
+ILM defines five index lifecycle phases:
+• Hot
+  The index is actively being updated and queried.
+  - Actively queried, written data 
+  - Could create searchable snapshot to S#, ACS, GCS
+  - Required phase
+
+• Warm
+  The index is no longer being updated but is still being queried.
+  - Active queries, but no data written 
+  - Can move data to less performant hardware 
+  - Option to make index read-only, set replicas
+
+• Cold
+  The index is no longer being updated and is queried infrequently. 
+  The information still needs to be searchable, but it’s okay if those queries are slower.
+  - Could create searchable snapshot to S#, ACS, GCS
+  - Less frequently queried data 
+
+• Frozen
+  The index is no longer being updated and is queried rarely. 
+  The information still needs to be searchable, but it’s okay if those queries are extremely slow.
+
+• Delete
+  The index is no longer needed and can safely be removed.
+  - Delete data stored in index from cluster 
+  - Wait for snapshot to be taken
+
+ILM moves indices through the lifecycle according to their age. 
+To control the timing of these transitions, you set a minimum age for each phase. 
+For an index to move to the next phase, all actions in the current phase must be complete and the index must be older than the minimum age of the next phase. 
+Configured minimum ages must increase between subsequent phases, for example, a "warm" phase with a minimum age of 10 days can only be followed by a "cold" phase with a minimum age either unset, or >= 10 days.
+
+If an index has unallocated shards and the cluster health status is yellow, the index can still transition to the next phase according to its index lifecycle management policy. 
+However, because Elasticsearch can only perform certain clean up tasks on a green cluster, there might be unexpected side effects.
+
+##Rollover
+When indexing time series data like logs or metrics, you can’t write to a single index indefinitely. 
+To meet your indexing and search performance requirements and manage resource usage, you write to an index until some threshold is met and then create a new index and start writing to it instead. 
+We recommend using data streams to manage time series data. 
+Data streams automatically track the write index while keeping configuration to a minimum.
+Each data stream requires an index template that contains:
+- A name or wildcard (*) pattern for the data stream.
+- The data stream’s timestamp field. This field must be mapped as a date or date_nanos field data type and must be included in every document indexed to the data stream.
+- The mappings and settings applied to each backing index when it’s created.
+
+Data streams are designed for append-only data, where the data stream name can be used as the operations (read, write, rollover, shrink etc.) target. 
+If your use case requires data to be updated in place, you can instead manage your time series data using index aliases.
+
+PUT /_data_stream/my-data-stream
+
+*If the Elasticsearch security features are enabled, you must have the create_index or manage index privilege for the data stream.
+ A matching index template with data stream enabled. See Set up a data stream (https://www.elastic.co/guide/en/elasticsearch/reference/current/set-up-a-data-stream.html).
+
+##Create ILM Policy
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT /_ilm/policy/hot-warm-cold-policy
+
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "min_age": "0ms",
+        "actions": {
+          "rollover": {
+            "max_age": "5m"                             #rollover max_age = ketika sudah 5 menit akan diproses ke proses selanjutnya yakni warm
+          }
+        }
+      },
+      "warm": {
+        "min_age": "5m",
+        "actions": {
+          "allocate": {
+            "require": {
+              "my_identifier": "beta"
+            },
+            "number_of_replicas": 0
+          },
+          "forcemerge": {
+            "max_num_segments": 1
+          },
+          "set_priority": {
+            "priority": 50
+          }
+        }
+      },
+      "cold": {
+        "min_age": "10m",
+        "actions": {
+          "allocate": {
+            "require": {
+              "my_identifier": "delta"
+            },
+            "number_of_replicas": 0
+          },
+          "set_priority": {
+            "priority": 0
+          }
+        }
+      },
+      "delete": {
+        "min_age": "15m",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}
+
+##Create Index Template 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT /_index_template/template
+
+{
+  "index_patterns": ["demo-*"],
+  "template": {
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "user": {
+          "type": "keyword"
+        },
+        "message": {
+          "type": "text"
+        }
+      }
+    },
+    "settings": {
+      "index.routing.allocation.require.my_identifier": "alpha",
+      "index.number_of_replicas": 0,
+      "index.number_of_shards": 1,
+      "index.lifecycle.name": "hot-warm-cold-policy",
+      "index.lifecycle.rollover_alias": "demo-alias"
+    }
+  }
+}
+
+##Add Alias 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT /demo-000001
+
+{
+  "aliases": {
+    "demo-alias": {
+      "is_write_index": true
+    }
+  }
+}
+
+GET /_cat/shards/demo-000001
+
+##Create Document
+http://localhost:5601 > Management > Dev Tools > Console 
+
+POST /demo-alias/_doc
+{
+  "user": "john_doe",
+  "message": "My 6 Test",
+  "created_at": "2024-08-04T10:00:00Z"
+}
+
+GET /demo-alias/_search
+{
+  "size":1000
+}
+
+##Describe ILM
+http://localhost:5601 > Management > Dev Tools > Console 
+
+GET /demo-alias/_ilm/explain
+
+GET /_cat/indices
+
+##Delete Indices
+http://localhost:5601 > Management > Dev Tools > Console 
+
+DELETE /demo-000002
+DELETE /demo-000001
+
+##Delete Index Template
+http://localhost:5601 > Management > Dev Tools > Console 
+
+DELETE /_index_template/template
+
+##Delete ILM Policy
+http://localhost:5601 > Management > Dev Tools > Console 
+
+DELETE /_ilm/policy/hot-warm-cold-policy
+
+
+
+### GUI Version ###
+##Creata ILM Policy 
+http://localhost:5601 > Management > Data > Index Lifecycle Policies > Create Policy >
+
+Policy name                : logstash-index-policy 
+Policy summary  
+Hot phase                  : Advance setting 
+Rollover                   : Enable rollover 
+Maximum primary shard size : 50 GB 
+Maximum age                : 30 days 
+Warm phase                 : 5 days
+Cold phase                 : 10 days  
+Delete phase               : 25 days 
+
+##Create Index Template
+http://localhost:5601 > Management > Data > Index Management > Index Template > Create Template >
+
+Logistic
+Name        : logstash-index-temp 
+Index patterns : logstash-*
+Data stream    : true               #false is indices only and not data stream
+
+Index settings 
+{
+  "index": {
+    "lifecycle": {
+      "name": "logstash-index-temp",
+      "rollover_alias": "logstash"
+    }
+  }
+}

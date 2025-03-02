@@ -1,0 +1,113 @@
+### INSTALL HEARTBEAT ###
+Heartbeat is a lightweight daemon that you install on a remote server to periodically check the status of your services and determine whether they are available. 
+Unlike Metricbeat, which only tells you if your servers are up or down, Heartbeat tells you whether your services are reachable.
+
+Heartbeat is useful when you need to verify that you’re meeting your service level agreements for service uptime. 
+It’s also useful for other scenarios, such as security use cases, when you need to verify that no one from the outside can access services on your private enterprise server.
+
+You can configure Heartbeat to ping all DNS-resolvable IP addresses for a specified hostname. 
+That way, you can check all services that are load-balanced to see if they are available.
+When you configure Heartbeat, you specify monitors that identify the hostnames that you want to check. 
+Each monitor runs based on the schedule that you specify. 
+For example, you can configure one monitor to run every 10 minutes, and a different monitor to run between the hours of 9:00 and 17:00.
+
+Heartbeat currently supports monitors for checking hosts via:
+- ICMP (v4 and v6) Echo Requests 
+  Use the icmp monitor when you simply want to check whether a service is available. 
+  This monitor requires root access.
+
+- TCP 
+  Use the tcp monitor to connect via TCP. 
+  You can optionally configure this monitor to verify the endpoint by sending and/or receiving a custom payload.
+
+- HTTP
+  Use the http monitor to connect via HTTP. 
+  You can optionally configure this monitor to verify that the service returns the expected response, such as a specific status code, response header, or content.
+
+##Install Heartbeat  
+https://www.elastic.co/guide/en/beats/heartbeat/current/setup-repositories.html
+
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+sudo apt-get install apt-transport-https
+echo "deb https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt-get update && sudo apt-get install heartbeat-elastic
+sudo systemctl enable heartbeat-elastic
+
+##Configure Heartbeat
+nano /etc/heartbeat/heartbeat.yml 
+
+heartbeat.config.monitors:
+  path: ${path.config}/monitors.d/*.yml
+  reload.enabled: true
+  reload.period: 5s
+
+#https://www.elastic.co/guide/en/beats/heartbeat/current/monitor-options.html
+heartbeat.monitors:
+- type: http
+  # ID used to uniquely identify this monitor in elasticsearch even if the config changes
+  id: apache-website
+  # Human readable display name for this service in Uptime UI and elsewhere
+  name: Apache Website
+  # List or urls to query
+  urls: ["http://192.168.0.60"]
+  # Configure task schedule
+  schedule: '@every 5s'
+  # Total test connection and data exchange timeout
+  #timeout: 16s
+  # Name of corresponding APM service, if Elastic APM is in use for the monitored service.
+  #service.name: my-apm-service-name
+- type: http
+  # ID used to uniquely identify this monitor in elasticsearch even if the config changes
+  id: elastic-rest
+  # Human readable display name for this service in Uptime UI and elsewhere
+  name: Elastic Rest
+  # List or urls to query
+  urls: ["https://elastic.rapli.com:9200"]
+  username: 'elastic'
+  password: 'password123'
+  # Configure task schedule
+  schedule: '@every 5s'
+
+setup.template.settings:
+  index.number_of_shards: 1
+  index.codec: best_compression
+
+setup.dashboards.enabled: true
+
+setup.kibana:
+  host: "https://kibana.rapli.com:5601"
+
+output.elasticsearch:
+  hosts: ["https://elastic.rapli.com:9200"]
+  protocol: "https"
+  username: "elastic"
+  password: "password123"
+
+processors:
+  - add_observer_metadata:
+      # Optional, but recommended geo settings for the location Heartbeat is running in
+      geo:
+        # Token describing this location
+        name: Madrid, Spain
+        # Lat, Lon "
+        location: "40.4378698, -3.8196205"
+
+##Configure Heartbeat
+nano /etc/heartbeat/monitors.d/http.yml 
+
+- type: http 
+  id: evermight-website 
+  name: Evermight Website
+  schedule: '*/5 * * * * * *'
+  hosts: ["https://rapli.com"]
+  ipv4: true 
+  ipv6: true 
+  mode: any
+
+##Test Config Heartbeat 
+/usr/share/heartbeat/bin/heartbeat test config -c /etc/heartbeat/heartbeat.yml --path.home /usr/share/heartbeat --path.data /var/lib/heartbeat 
+/usr/share/heartbeat/bin/heartbeat test output -c /etc/heartbeat/heartbeat.yml --path.home /usr/share/heartbeat --path.data /var/lib/heartbeat 
+
+##Run Heartbeat 
+/usr/share/heartbeat/bin/heartbeat setup -c /etc/heartbeat/heartbeat.yml --path.home /usr/share/heartbeat --path.data /var/lib/heartbeat 
+systemctl enable heartbeat.service

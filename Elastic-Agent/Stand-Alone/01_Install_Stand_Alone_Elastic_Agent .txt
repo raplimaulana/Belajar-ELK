@@ -1,0 +1,45 @@
+### INSTALL STAND ALONE ELASTIC AGENT ###
+Elastic Agent is a single, unified way to add monitoring for logs, metrics, and other types of data to a host. 
+It can also protect hosts from security threats, query data from operating systems, forward data from remote services or hardware, and more. 
+A single agent makes it easier and faster to deploy monitoring across your infrastructure. 
+Each agent has a single policy you can update to add integrations for new data sources, security protections, and more.
+https://www.elastic.co/guide/en/fleet/current/fleet-overview.html.
+
+As the following diagram illustrates, Elastic Agent can monitor the host where it’s deployed, and it can collect and forward data from remote services and hardware where direct deployment is not possible.
+
+##Install Elastic Agent Stand Alone (No Fleet Server)
+curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.17.2-linux-x86_64.tar.gz
+tar xzvf elastic-agent-8.17.2-linux-x86_64.tar.gz
+
+##Configure Elastic Agent
+nano elastic-agent-8.17.2-linux-x86_64/elastic-agent.yml
+
+outputs:
+  default:
+    type: elasticsearch
+    hosts: ["https://elastic.rapli.com:9200"]
+    username: "elastic"
+    password: "password123"
+
+inputs: 
+  - type: system/metrics 
+    id: unique-system-metrics-input 
+    data_stream.namespace: default 
+    use_output: default
+    streams:
+      - metricset: cpu 
+        data_stream.dataset: system.cpu 
+      - metricset: memory 
+        data_stream.dataset: system.memory 
+      - metricset: network 
+        data_stream.dataset: system.network 
+      - metricset: filesystem 
+        data_stream.dataset: system.filesystem
+
+##Restart Elastic Agent 
+/usr/bin/elastic-agent uninsntall
+elastic-agent-8.17.2-linux-x86_64/elastic-agent install 
+
+
+##Inspect Elastic Agent
+elastic-agent-8.17.2-linux-x86_64/elastic-agent inspect

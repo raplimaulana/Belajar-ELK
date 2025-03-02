@@ -1,0 +1,23 @@
+### TAKE ACTION IN DISCOVER ###
+
+##Take Action in Discover
+http://localhost:5601 > Analytics > Discover > Choose index kibana_sample_data_logs > Alerts > Create search threshold rule 
+
+#Create rule
+- Name                               : cluster_block_exception
+- Notify                             : Only on status change 
+- When the number of documents match : DATA VIEW logs*
+  Add filter                         : cluster_block_exception
+  log.level                          : error 
+- When the number of matches         : iS ABOVE 100, FOR THE LAST 5 minutes   
+- Select a size                      : SIZE 100
+#Actions 
+- Select a connector type            : Elastic-Cloud-SMTP (preconfigured)
+- Email connector                    : Elastic-Cloud-SMTP 
+- To                                 : rapli.maulana@gmail.com 
+- Subject                            : {{alertName}} has occured
+- Message                            : Elasticsearch query alert '{{alertName}}' is active: \
+                                       - Value: {{context.value}} \
+                                       - Conditions Met: {{context.conditions}} over {{params.timeWindowSize}}{{params.timeWindowUnit}} \
+                                       - Timestamp: {{context.date}} \
+                                       - Link: {{context.link}}

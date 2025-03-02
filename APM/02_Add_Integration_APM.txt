@@ -1,0 +1,110 @@
+### ADD INTEGERATION APM ###
+
+##Setup SSL Fleet Server with Lets Encrypt (Skip If You Use Public SSL)
+https://kibana.rapli.com:5601 > Management > Fleet > Settings > Outputs > Add output >
+
+Name                                                      : default 
+type                                                      : Elasticsearch
+Advanced YAML configuration                               : ssl.verification_mode : none \
+                                                            ssl.certificate_authorities : ["/etc/certs/elastic.rapli.com/ca.crt"] \
+                                                            ssl.certificate: "/etc/certs/elastic.rapli.com/ca.crt"
+                                                            ssl.key: "/etc/certs/elastic.rapli.com/private.key"
+Make this output the default for agent integrations       : true 
+Make this output the default for agent monitoring         : true
+
+##Edit Fleet Server Hosts
+https://kibana.rapli.com:5601 > Management > Fleet > Settings > Fleet Server Hosts > Edit hosts >
+
+ URL                                        : https://fleet.rapli.com:8220 
+
+
+##Add Fleet Server Hosts
+https://kibana.rapli.com:5601 > Management > Fleet > Agent >  Add Fleet Server >
+
+Select an agent policy to host Fleet Server
+Create a policy for fleet server 
+Create policy                              : Fleet server policy 1
+Collect system logs and metrics            : true 
+Choose a deployment mode for security      : Production 
+Add your Fleet Server host            
+Name                                       : Fleet 
+URL                                        : https://fleet.rapli.com:8220 
+Add host             
+Generate a service token                   : ADFHQbhij19235ibbja298qonavaju2
+Install Fleet Server to a centralized host 
+Linux tar                                  : curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.17.2-linux-x86_64.tar.gz 
+                                             tar xzvf elastic-agent-8.17.2-linux-x86_64.tar.gz 
+                                             cd elastic-agent-8.17.2-linux-x86_64 
+                                             sudo ./elastic-agent install --url=https://fleet.rapli.com:8220 \
+                                               --fleet-server-es=https://elastic.rapli.com:9200 \
+                                               --fleet-server-service-token= ADFHQbhij19235ibbja298qonavaju2 \
+                                               --fleet-server-policy=fleet-server-policy \
+                                               --certificate-authorities=<PATH_TO_CA> \
+                                               --fleet-server-es-ca=<PATH_TO_ES_CERT> \
+                                               --fleet-server-cert=<PATH_TO_FLEET_SERVER_CERT> \
+                                               --fleet-server-key=<PATH_TO_FLEET_SERVER_CERT_KEY> \
+
+##Install Elastic Agent Fleet Server
+curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.17.2-linux-x86_64.tar.gz 
+tar xzvf elastic-agent-8.17.2-linux-x86_64.tar.gz 
+cd elastic-agent-8.17.2-linux-x86_64 
+sudo ./elastic-agent install --url=https://fleet.rapli.com:8220 \
+  --fleet-server-es=https://elastic.rapli.com:9200 \
+  --fleet-server-service-token= ADFHQbhij19235ibbja298qonavaju2 \
+  --fleet-server-policy=fleet-server-policy \
+  --certificate-authorities=/etc/certs/elastic.rapli.com/ca.crt \
+  --fleet-server-es-ca=/etc/certs/elastic.rapli.com/ca.crt \
+  --fleet-server-cert=/etc/certs/fleet.rapli.com/fleet.crt \
+  --fleet-server-key=/etc/certs/fleet.rapli.com/fleet.key \
+
+##Acces Elastic Agent Fleet Server on Kibana 
+https://kibana.rapli.com:5601 > Management > Fleet > Agent
+
+##Add APM Integration
+https://kibana.rapli.com:5601 > Management > Fleet > Agent Policy > Fleet Server policy 1 > Add integration > Elastic APM > Add Elastic APM >
+https://kibana.rapli.com:5601 > Observability > APM > Services > Add APM integration > Elastic APM > Add Elastic APM >
+
+General
+Server configuration                    
+Hosts                                   : fleet.rapli.com:8200
+URL                                     : https://fleet.rapli.com:8200
+Real User Monitoring 
+Enable RUM                              : Enabled 
+Allowed Origins                         : "*"
+TLS Settings
+Enable TLS                              : Enabled 
+TLS certificate                         
+File path to server certificate         : /etc/certs/fleet.rapli.com/fleet.crt
+File path to server certidicate key     : /etc/certs/fleet.rapli.com/fleet.key
+Supported protocol versions             : TLSv1.1, TLSv1.2, TLSv1.3 
+Agent authorization 
+API key for agent authentication        : false
+Secret token                            : testtoken 
+Anonymous Agent access                  : Enabled 
+Allowed agents                          : rum-js, js-base, iOS/swift
+Where to add this integration?          : Existing hosts
+New agent policy name                  : Fleet server policy 1
+Collect system log and metrics         : true 
+
+##Install Elastic Agent Nginx on Server Nginx 
+https://kibana.rapli.com:5601 > Management > Integrations > Search for integrations > Nginx > Integration Policies > Add Agent > Enroll in Fleet > Install Elastic Agent on your host
+
+nano elastic-agent-8.17.2-linux-x86_64/elastic-agent-install.sh
+
+curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.17.2-linux-x86_64.tar.gz 
+tar xzvf elastic-agent-8.17.2-linux-x86_64.tar.gz 
+cd elastic-agent-8.17.2-linux-x86_64 
+sudo ./elastic-agent install --url=https://fleet.rapli.com:8220 \
+  --enrollment-token= ADFHQbhij19235ibbja298qonavaju2 \
+  --certificate-authorities=/etc/certs/elastic.rapli.com/ca.crt \
+  --fleet-server-es-ca=/etc/certs/elastic.rapli.com/ca.crt \
+
+##Run Bash Script 
+sh elastic-agent-8.17.2-linux-x86_64/elastic-agent-install.sh
+
+
+##Acces Integration Apache on Kibana 
+https://kibana.rapli.com:5601 > Management > Fleet > Agent
+https://kibana.rapli.com:5601 > Management > Index Management > Data Streams 
+https://kibana.rapli.com:5601 > Analytics > Dashboard > Choose Default Dashboard Created > [Logs Nginx] Acces and error logs
+

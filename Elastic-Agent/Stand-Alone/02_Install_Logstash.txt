@@ -1,0 +1,28 @@
+### INSTALL LOGSTASH ###
+
+##Install Logstash 
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+sudo apt-get install apt-transport-https
+echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt-get update && sudo apt-get install logstash
+
+#Configure Logstash 
+nano /etc/logstash/logstash.conf 
+
+input {
+    elastic_agent {
+        port => 5044
+    }
+}
+
+output {
+    #stdout{}
+    elasticsearch {
+        host => ["https://elastic.rapli.com:9200"]
+        #data_stream => true
+        ssl => true 
+        user => "elastic"
+        password => "password123"
+        index => "LsLogs"
+    }
+}

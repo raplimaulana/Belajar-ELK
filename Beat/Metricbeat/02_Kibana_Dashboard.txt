@@ -1,0 +1,61 @@
+### KIBANA DASHBOARD ###
+https://kibana.rapli.com:5601 > Management > Index Management > Data Streams 
+https://kibana.rapli.com:5601 > Analytics > Dashboard > Choose Default Dashboard Created > VMs overview ECS 
+
+##Create Role 
+https://kibana.rapli.com:5601 > Management > Roles > Create role > 
+
+Role name           : metricbeat-user
+Elasticsearch    
+Cluster privileges  : monitor, read_ilm
+Index privileges    
+Indices             : metricbeat-*
+privileges          : create_doc 
+
+##Create User 
+https://kibana.rapli.com:5601 > Management > Users > Create user 
+
+Profile
+Username            : metric 
+Full name           : metric 
+Email address       : rapli.maulana@gmail.com 
+Password 
+Password            : password123
+Confirm password    : password123
+Privileges          
+Roles               : metricbeat-user, editor
+
+##Change User Password in Metricbeat Config 
+#Generate key
+https://kibana.rapli.com:5601 > Management > Dev Tools 
+
+Post /_security/api_key/grant 
+{
+    "grant_type": "password",
+    "username": "metric",
+    "password": "password123",
+    "api_key": {
+        "name": "metric"
+    }
+}
+
+{
+    "id": "huwegkba438al9a",
+    "name": "metric",
+    "api_key": "uhq3nja4iano2-uh43",
+    "encoded": "8y1hbojqjiafbj98q35onah4291ansd=="
+}
+
+#Configure Metricbeat
+nano /etc/metricbeat/metricbeat.yml 
+
+output.elasticsearch:
+    hosts: ["elastic.rapli.com:9200"]
+    protocol: "https"
+    api_key: "${ES_API_KEY}"
+
+/usr/share/metricbeat/bin/metricbeat keystore add ES_API_KEY -c /etc/metricbeat/metricbeat.yml --path.home /usr/share/metricbeat --path.data /var/lib/metricbeat 
+huwegkba438al9a:uhq3nja4iano2-uh43
+
+##Acces Metricbeat on Kibana 
+https://kibana.rapli.com:5601 > Observability > Overview > Metrics

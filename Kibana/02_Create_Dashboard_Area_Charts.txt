@@ -1,0 +1,18 @@
+### CREATE DASHBOARD AREA CHARTS ###
+
+##Create Area Charts on Dashboard
+http://localhost:5601 > Analytics > Dashboard > Create new dashboard > Create visualizaton > Choose index kibana_sample_data_logs > 
+
+- Visualization type        : Choose 'Bar vertical stacked' and change to 'Area'
+- Horizontal axis           : Choose 'timestamp' and change 
+  - Select a function       : Filters 
+  - Select a field          : timestamp 
+  - Display name            : timestamp
+  - Costumize time interval : true 
+  - Minimum interval        : 1 hours 
+- Vertical axis             : Choose 'Median of bytes' and change 
+  - Select a function       : Sum
+  - Select a field          : bytes 
+  - Display name            : Sum of bytes 
+  - Value format            : default
+  - Axis side               : auto 

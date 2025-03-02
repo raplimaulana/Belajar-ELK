@@ -1,0 +1,16 @@
+### CREATE DRILL DOWN ### 
+Create drill down for make dashboard interactive.
+For Example you already have 3 panel. 
+You want to filter all  3 panels to spesific data using 1 panel control.
+
+*Drill down =  Filters data to a more detailed level
+ Drill Up   = Returns to a more general or aggregated level
+
+##Create Area Charts on Dashboard
+http://localhost:5601 > Analytics > Dashboard > Create new dashboard > Select type > Controls > Options list
+
+- Country label   : Source contry 
+- Index pattern   : kibana_sample_data_logs
+- field           : geo.src 
+- Multiselect     : true 
+- Dynamic options : true

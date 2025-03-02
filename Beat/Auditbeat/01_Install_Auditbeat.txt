@@ -1,0 +1,71 @@
+### INSTALL AUDITBEAT ###
+Auditbeat is a lightweight shipper that you can install on your servers to audit the activities of users and processes on your systems. 
+For example, you can use Auditbeat to collect and centralize audit events from the Linux Audit Framework. 
+You can also use Auditbeat to detect changes to critical files, like binaries and configuration files, and identify potential security policy violations.
+
+##Install Auditbeat  
+https://www.elastic.co/guide/en/beats/auditbeat/current/setup-repositories.html
+
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+sudo apt-get install apt-transport-https
+echo "deb https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt-get update && sudo apt-get install auditbeat
+sudo systemctl enable auditbeat
+
+##Configure Auditbeat
+nano /etc/auditbeat/auditbeat.yml 
+
+auditbeat.modules:
+- module: auditd
+  audit_rule_files: [ '${path.config}/audit.rules.d/*.conf' ]
+  audit_rules: |
+
+- module: file_integrity
+  paths:
+  - /bin
+  - /usr/bin
+  - /sbin
+  - /usr/sbin
+  - /etc
+
+- module: system
+  datasets:
+    - package # Installed, updated, and removed packages
+
+  period: 2m # The frequency at which the datasets check for changes
+
+- module: system
+  datasets:
+    - host    # General host information, e.g. uptime, IPs
+    - login   # User logins, logouts, and system boots.
+    - process # Started and stopped processes
+    - socket  # Opened and closed sockets
+    - user    # User information
+  state.period: 2m
+  user.detect_password_changes: true
+
+  # File patterns of the login record files.
+  login.wtmp_file_pattern: /var/log/wtmp*
+  login.btmp_file_pattern: /var/log/btmp*
+
+setup.template.settings:
+  index.number_of_shards: 1
+
+setup.dashboards.enabled: true
+
+setup.kibana:
+  host: "https://kibana.rapli.com:5601"
+
+output.elasticsearch:
+  hosts: ["https://elastic.rapli.com:9200"]
+  protocol: "https"
+  username: "elastic"
+  password: "password123"
+
+##Test Config Auditbeat 
+/usr/share/auditbeat/bin/auditbeat test config -c /etc/auditbeat/auditbeat.yml --path.home /usr/share/auditbeat --path.data /var/lib/auditbeat 
+/usr/share/auditbeat/bin/auditbeat test output -c /etc/auditbeat/auditbeat.yml --path.home /usr/share/auditbeat --path.data /var/lib/auditbeat 
+
+##Run Auditbeat 
+/usr/share/auditbeat/bin/auditbeat setup -c /etc/auditbeat/auditbeat.yml --path.home /usr/share/auditbeat --path.data /var/lib/auditbeat 
+systemctl enable auditbeat.service

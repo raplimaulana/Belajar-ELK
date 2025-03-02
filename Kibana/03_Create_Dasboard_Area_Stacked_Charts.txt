@@ -1,0 +1,32 @@
+### CREATE DASHBOARD AREA STACKED CHARTS ###
+
+##Create Area Charts on Dashboard
+http://localhost:5601 > Analytics > Dashboard > Create new dashboard > Create visualizaton > Choose index kibana_sample_data_logs > 
+
+- Visualization type        : Choose 'Bar vertical stacked' and change to 'Area stacked'
+- Filter by type            : bytes 
+- Area stacked              : kibana_sample_data_logs
+- Horizontal axis           : timestamp 
+- Vertical axis             : Median of bytes
+- Break downn by     
+  - Select a function         : Filters 
+  - Select a field            : tags.keyword 
+  - Number of values          : 5 
+  - Rank by                   : Median of bytes 
+  - Rank direction            : Descending 
+  - Display name              : Top values of tags.keyword
+  - Group by this field first : true 
+
+- Visual options 
+  - Curve lines    : false
+  - Missing values : Hide
+  - Fill opacity   : 0.3
+
+- Legend 
+  - Display           : auto
+  - Location          : Outside 
+  - Alignment         : >
+  - Number of columns : 1
+  - Truncate test     : true 
+  - Maximum lines     : 1
+  - Show value        : false

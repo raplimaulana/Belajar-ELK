@@ -1,0 +1,15 @@
+### KIBANA USER, ROLE AND PERMISSION ###
+
+##Create User
+http://localhost:5601 > Management > Stack Management > Security > Users > Create user 
+
+##Create Roles
+http://localhost:5601 > Management > Stack Management > Security > Roles > Create role 
+
+- Role name                     : new-role 
+- Elasticsearch 
+  - Indices                     : commits*
+  - Privileges                  : read
+- Kibana                        : Add kibana privilege 
+  - Spaces                      : *All Spaces
+  - Privileges for all features : choose you wan give access to current role

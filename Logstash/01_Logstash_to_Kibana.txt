@@ -1,0 +1,21 @@
+### LOGSTASH TO KIBANA ###
+#Configuration file
+nano logstash.conf
+input {
+    stdin{}
+}
+
+output {
+    #stdin{}
+    elasticsearch {
+        hosts => ["localhost:9200"]
+        index => "indexForLogstash"
+    }
+}
+
+#Menjalankan logstash
+logstash -f logstash.conf 
+
+#Create index pattern
+HTTP://localhost:5601 > Management > Index patterns > Create index pattern > Index pattern = indexForLogstash > Time filter field name = @timestamp > Create index pattern
+

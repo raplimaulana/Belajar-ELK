@@ -1,0 +1,143 @@
+### SETUP ELK ###
+Elastic search cluster
+• Single node cluster
+  - node 1
+
+• Multiple node cluster 
+  - node 1
+  - node 2
+  - node 3
+
+##Install Elasticsearch 
+wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.17.2-linux-x86_64.tar.gz
+wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.17.2-linux-x86_64.tar.gz.sha512
+shasum -a 512 -c elasticsearch-8.17.2-linux-x86_64.tar.gz.sha512 
+tar -xzf elasticsearch-8.17.2-linux-x86_64.tar.gz
+cd elasticsearch-8.17.2/
+
+##Configure Elasticsearch
+#ssh node 1
+nano /etc/elasticsearch/elasticsearch.yml 
+
+cluster.name: es-demo
+node.name: node1                                                            
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+network.host: node1.rapli.com
+http.port: 9200
+#discovery.seed_hosts: ["host1", "host2"]
+discovery.seed_hosts:                                                           #seed host digunakan untuk memastikan elasticsearch tetap berjalan walaupun adanode yang mati 
+  - 45.79.219:9300          #node1                                              #maksimal node mati adalah setengah dari total node yang ada di cluster
+  - 173.255.248.249:9300    #node2                                              #2 node mati, 3 node up = cluster up
+  - 45.33.54.160:9300       #node3                                              #2 node mati, 2 node up = cluster up
+  - 97.107.138.178:9300     #node4
+  - 172.105.3.82:9300       #node5
+xpack.security.enabled: true
+xpack.security.enrollment.enabled: true
+xpack.security.http.ssl:
+  enabled: true
+  key: /etc/elasticsearch/certs/node1.rapli.com/privkey1.pem
+  certificate: /etc/elasticsearch/certs/node1.rapli.com/fullchain1.pem
+  # keystore.path: /etc/elasticsearch/certs/http.p12                            #ssl generate bawaan elasticsearch (http_ca.crt, http.p12, transport.p12)
+xpack.security.transport.ssl:
+  enabled: true
+  verification_mode: certificate
+  keystore.path: /etc/elasticsearch/certs/transport.p12
+  truststore.path: /etc/elasticsearch/certs/transport.p12
+cluster.initial_master_nodes: ["node1"]                                         #isi dengan node.name, start elasticsearchselanjutnya ini bisa di comment saja karena hanya dipakai saat initial setup master pertama kali saja
+http.host: 0.0.0.0
+
+##Start Elasticsearch 
+systemctl start elasticsearch 
+
+##Elasticsearch Reset Password 
+/usr/share/elasticsearch/bin/elasticsearch-reset-password -i -u elastic
+
+*Use kibana 
+ http://localhost:5601 > Management > Dev Tools > Console 
+ 
+ POST _security/user/elastic/_password
+ {
+   "password": "NewSecurePassword123"
+ }
+
+##Verify Installation Elasticsearch
+curl -k -u elastic:password123 https://node1.rapli.com:9200/
+curl -k -u elastic:password123 https://node1.rapli.com:9200/_cluster/health?pretty
+curl -k -u elastic:password123 https://node1.rapli.com:9200/_cat/nodes?pretty
+curl -k -u elastic:password123 https://node1.rapli.com:9200/_cat/master?pretty
+
+##Add Another Node for Elasticsearch
+#ssh node 1
+/usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -s node
+
+eybh44...
+
+#ssh node 2
+/usr/share/elasticsearch/bin/elasticsearch-reconfigure-node --enrolment-token eybh44...
+
+nano /etc/elasticsearch/elasticsearch.yml 
+
+cluster.name: es-demo
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+network.host: node2.rapli.com
+http.port: 9200
+#discovery.seed_hosts: ["host1", "host2"]
+discovery.seed_hosts:
+  - 45.79.219:9300            #node1
+  - 173.255.248.249:9300      #node2
+  - 45.33.54.160:9300         #node3
+  - 97.107.138.178:9300       #node4
+  - 172.105.3.82:9300         #node5
+xpack.security.enabled: true
+xpack.security.enrollment.enabled: true
+xpack.security.http.ssl:
+  enabled: true
+  key: /etc/elasticsearch/certs/node1.rapli.com/privkey1.pem
+  certificate: /etc/elasticsearch/certs/node1.rapli.com/fullchain1.pem
+# keystore.path: certs/http.p12
+xpack.security.transport.ssl:
+  enabled: true
+  verification_mode: certificate
+  keystore.path: /etc/elasticsearch/certs/transport.p12
+  truststore.path: /etc/elasticsearch/certs/transport.p12
+http.host: 0.0.0.0
+transport.host: 0.0.0.0
+
+systemctl start elasticsearch 
+
+##Install Kibana 
+curl -O https://artifacts.elastic.co/downloads/kibana/kibana-8.17.2-linux-x86_64.tar.gz
+curl https://artifacts.elastic.co/downloads/kibana/kibana-8.17.2-linux-x86_64.tar.gz.sha512 | shasum -a 512 -c - 
+tar -xzf kibana-8.17.2-linux-x86_64.tar.gz
+cd kibana-8.17.2/ 
+
+##Configure Kibana 
+nano /etc/kibana/kibana.yml 
+
+server.port: 5601
+server.host: "0.0.0.0"
+server.publicBaseUrl: "https://kibana.rapli.comt:5601/"
+server.ssl.enabled: true
+server.ssl.certificate: /etc/kibana/certs/kibana.evermight.net/fullchain1.pem
+server.ssl.key: /etc/kibana/certs/kibana.evermight.net/privkey1.pem
+elasticsearch.hosts:
+  - https://node1.rapli.com:9200
+  - https://node2.rapli.com:9200
+elasticsearch.ssl.verificationMode: full
+logging:
+  appenders:
+    file:
+      type: file
+      fileName: /var/log/kibana/kibana.log
+      layout:
+        type: json
+  root:
+    appenders:
+      - default
+      - file
+pid.file: /run/kibana/kibana.pid
+
+##Start Kibana 
+systemctl start kibana 

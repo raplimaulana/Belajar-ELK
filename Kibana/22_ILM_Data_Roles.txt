@@ -1,0 +1,177 @@
+### ILM DATA ROLES ###
+Any time that you start an instance of Elasticsearch, you are starting a node. 
+A collection of connected nodes is called a cluster. 
+If you are running a single node of Elasticsearch, then you have a cluster of one node. 
+All nodes know about all the other nodes in the cluster and can forward client requests to the appropriate node.
+
+Each node performs one or more roles, Roles control the behavior of the node in the cluster.
+- master
+- data
+- data_content
+- data_hot
+- data_warm
+- data_cold
+- data_frozen
+- ingest
+- ml
+- remote_cluster_client
+- transform
+
+##Get Information All Node 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+GET /_cat/nodes
+
+*Jika tidak di define, secara default akan menggunakan semua role (cdfhiilmrstw)
+
+##Edit Config Elasticsearh
+#ssh node1 (hilmrst)
+nano /etc/elasticsearch/elasticsearch.yml
+
+cluster.name: es-demo
+node.name: node1
+node.roles: ["master", "data_content", "data_hot", "ingest", "ml", "remote_cluster_client", "transform"]
+node.attr.my_identifier: alpha
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+
+#ssh node2 (ilmrstw)
+nano /etc/elasticsearch/elasticsearch.yml
+
+cluster.name: es-demo
+node.name: node2
+node.attr.my_identifier: beta
+node.roles: ["master", "data_content", "data_warm", "ingest", "ml", "remote_cluster_client", "transform"]
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+
+#ssh node3  (cilmrst)
+nano /etc/elasticsearch/elasticsearch.yml
+
+cluster.name: es-demo
+node.name: node3
+node.attr.my_identifier: delta
+node.roles: ["master", "data_content", "data_cold", "ingest", "ml", "remote_cluster_client", "transform"]
+path.data: /var/lib/elasticsearch
+path.logs: /var/log/elasticsearch
+
+##Creata ILM Policy 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT /_ilm/policy/hot-warm-cold-policy
+
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "min_age": "0ms",
+        "actions": {
+          "rollover": {
+            "max_age": "5m"
+          }
+        }
+      },
+      "warm": {
+        "min_age": "5m",
+        "actions": {
+          "allocate": {
+            "number_of_replicas": 0
+          },
+          "forcemerge": {
+            "max_num_segments": 1
+          },
+          "set_priority": {
+            "priority": 50
+          }
+        }
+      },
+      "cold": {
+        "min_age": "10m",
+        "actions": {
+          "allocate": {
+            "number_of_replicas": 0
+          },
+          "set_priority": {
+            "priority": 0
+          }
+        }
+      },
+      "delete": {
+        "min_age": "15m",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}
+
+##Create Index Template
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT /_index_template/demo_template
+
+{
+  "index_patterns": ["demo-*"],
+  "template": {
+    "settings": {
+      "index.routing.allocation.include._tier_preference": "data_hot",
+      "index.number_of_replicas": 0,
+      "index.number_of_shards": 1,
+      "index.lifecycle.name": "hot-warm-cold-policy",
+      "index.lifecycle.rollover_alias": "demo-alias"
+    }
+  }
+}
+
+##Create Alias
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT /demo-000001
+
+{
+  "aliases": {
+    "demo-alias": {
+      "is_write_index": true
+    }
+  }
+}
+
+##Create Document 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+POST /demo-alias/_doc
+
+{
+  "user": "john_user",
+  "message": "index message 10",
+  "created_at": "2024-08-04T10:00:00Z"
+}
+
+##Describe ILM
+http://localhost:5601 > Management > Dev Tools > Console 
+
+GET /demo-alias/_search
+{"size":1000}
+
+GET /_cat/shards/demo-000001
+
+GET /demo-alias/_ilm/explain
+
+GET /_cat/indices
+
+##Delete Indices
+http://localhost:5601 > Management > Dev Tools > Console 
+
+DELETE /demo-000002
+DELETE /demo-000001
+
+##Delete Index Template
+http://localhost:5601 > Management > Dev Tools > Console 
+
+DELETE /_index_template/template
+
+##Delete ILM Policy
+http://localhost:5601 > Management > Dev Tools > Console 
+
+DELETE /_ilm/policy/hot-warm-cold-policy

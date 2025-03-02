@@ -1,0 +1,77 @@
+### APM ###
+Application performance monitoring (APM)
+Elastic APM is an application performance monitoring system built on the Elastic Stack. 
+It allows you to monitor software services and applications in real time, by collecting detailed performance information on response time for incoming requests, database queries, calls to caches, external HTTP requests, and more. 
+This makes it easy to pinpoint and fix performance problems quickly.
+
+
+##Install APM 
+https://www.elastic.co/guide/en/beats/apm/current/setup-repositories.html
+
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+sudo apt-get install apt-transport-https
+echo "deb https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt-get update && sudo apt-get install apm
+sudo systemctl enable apm
+
+##Configure Auditbeat
+nano /etc/apm/apm.yml 
+
+apm.modules:
+- module: auditd
+  audit_rule_files: [ '${path.config}/audit.rules.d/*.conf' ]
+  audit_rules: |
+
+- module: file_integrity
+  paths:
+  - /bin
+  - /usr/bin
+  - /sbin
+  - /usr/sbin
+  - /etc
+
+- module: system
+  datasets:
+    - package # Installed, updated, and removed packages
+
+  period: 2m # The frequency at which the datasets check for changes
+
+- module: system
+  datasets:
+    - host    # General host information, e.g. uptime, IPs
+    - login   # User logins, logouts, and system boots.
+    - process # Started and stopped processes
+    - socket  # Opened and closed sockets
+    - user    # User information
+  state.period: 2m
+  user.detect_password_changes: true
+
+  # File patterns of the login record files.
+  login.wtmp_file_pattern: /var/log/wtmp*
+  login.btmp_file_pattern: /var/log/btmp*
+
+setup.template.settings:
+  index.number_of_shards: 1
+
+setup.dashboards.enabled: true
+
+setup.kibana:
+  host: "https://kibana.rapli.com:5601"
+
+output.elasticsearch:
+  hosts: ["https://elastic.rapli.com:9200"]
+  protocol: "https"
+  username: "elastic"
+  password: "password123"
+
+##Test Config APM
+/usr/share/apm/bin/apm test config -c /etc/apm/apm.yml --path.home /usr/share/apm --path.data /var/lib/apm 
+/usr/share/apm/bin/apm test output -c /etc/apm/apm.yml --path.home /usr/share/apm --path.data /var/lib/apm 
+
+##Run APM
+/usr/share/apm/bin/apm setup -c /etc/apm/apm.yml --path.home /usr/share/apm --path.data /var/lib/apm 
+systemctl enable apm.service
+
+##Acces APM on Kibana 
+https://kibana.rapli.com:5601 > Observability > APM > Services 
+https://kibana.rapli.com:5601 > Management > Integrations > Elastic APM 

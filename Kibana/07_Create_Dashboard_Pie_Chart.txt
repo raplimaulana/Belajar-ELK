@@ -1,0 +1,14 @@
+### CREATE DASHBOARD PIE CHART ###
+
+##Create Pie Chart on Dashboard
+http://localhost:5601 > Analytics > Dashboard > Create new dashboard > Create visualizaton > Choose index metrics-* > 
+
+- Visualization type          : Choose 'Bar vertical stacked' and change to 'Pie'
+- Slice by                    : Top values of client_geo_countryisocode
+  - Select a function         : Top values
+  - Select field              : client_geo_countryisocode
+  - Number of values          : 23
+  - Order by                  : Count of records 
+  - Order direction           : Descending 
+  - Display name              : Top values of client_geo_countryisocode 
+- Size by                     : Count of records 

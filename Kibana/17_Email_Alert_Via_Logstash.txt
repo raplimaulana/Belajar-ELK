@@ -1,0 +1,82 @@
+### EMAIL ALERT VIA LOGSTASH ###
+
+##Edit Config Kibana
+nano /etc/kibana/kibana.yml
+
+xpack.encryptedSavedObjects.encryptionKey: 1234567890
+server.port: 5601
+server.host: 0.0.0.0
+server.publicBaseUrl: "https://kibana.rapli.com:5601"
+server.ssl.enabled: true 
+server.ssl.certificate: /etc/kibana/certs/kibana.rapli.com/fullchain.pem
+server.ssl.key: /etc/kibana/certs/kibana.rapli.com/privkey1.pem
+
+##Check Available Alerts
+http://localhost:5601 > Observability > APM > Services > node-app-1 (Choose your services) > Alerts 
+
+##Create Alerts 
+http://localhost:5601 > Observability > Alerts > Manage Rules > Create rule >
+
+Name                    : Error Count
+Check every             : 1 minute 
+Notify                  : Every time alert is active
+Select rule type        : Error count threeshold 
+Actions
+Select a connector type : Server log 
+Create a connector
+Server log connector 
+Connector name          : connector-1                      
+Notifications
+Run when                : Threshold met
+Server log connector    : connector-1 
+Level                   : Fatal 
+Message                 : - {{alertName}} alert is firing  because ofthe following conditions: \
+                          - Service name: {{context.serviceName}}
+                          - Environment: {{context.environment}}
+                          - Threshold: {{context.threshold}}
+                          - Triggered value: {{context.triggerValue}} errors over the last {{context.interval}}
+
+##Install Logstash 
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+sudo apt-get install apt-transport-https
+echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt-get update && sudo apt-get install logstash
+
+##Configure Logstash 
+nano /etc/logstash/logstash.conf 
+
+input {
+  file {
+    type => "json"
+    codec => "json"
+    path => "/var/log/kibana/kibana.log"
+    start_position => beginning 
+  }
+}
+
+filter {
+    grok {
+        match => {
+            "message" => "Server log: %(DATA:apmreason):;;- Service name: %(DATA:apmservice);-
+        }
+    }
+}
+
+output  {
+  #if [log][level] == "ERROR"
+  email {
+    to => "<user@example.com>"
+    from => "<user@example.com>"
+    subject => "Alert: %(message)"
+    body => "%(message)"
+    authentication => "plain"
+    address => "smtp.mailtrap.io"
+    domain => "smtp.mailtrap.io"
+    port => 2525
+    username => "<Your Username>"
+    password => "<Your Password>"
+  }
+}
+
+#Restart Logstash
+/usr/share/logstash/bin/logstash -f /etc/logstash/logstash.conf 

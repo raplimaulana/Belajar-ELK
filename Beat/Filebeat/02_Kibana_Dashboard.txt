@@ -1,0 +1,234 @@
+### KIBANA DASHBOARD ###
+https://kibana.rapli.com:5601 > Management > Index Management > Data Streams 
+https://kibana.rapli.com:5601 > Analytics > Dashboard > Choose Default Dashboard Created > New users and group ECS 
+
+##Create Role 
+https://kibana.rapli.com:5601 > Management > Roles > Create role > 
+
+Role name           : filebeat-user
+Elasticsearch    
+Cluster privileges  : monitor, read_ilm, read_pipeline, manage_ingest_pipelines, manage_pipeline
+Index privileges    
+Indices             : filebeat-*
+privileges          : create_doc 
+
+##Create User 
+https://kibana.rapli.com:5601 > Management > Users > Create user 
+
+Profile
+Username            : filebeat-publisher 
+Full name           : filebeat-publisher
+Email address       : rapli.maulana@gmail.com 
+Password 
+Password            : password123
+Confirm password    : password123
+Privileges          
+Roles               : filebeat-user, editor
+
+##Change User Password in Filebeat Config 
+#Generate key
+https://kibana.rapli.com:5601 > Management > Dev Tools 
+
+Post /_security/api_key/grant 
+{
+    "grant_type": "password",
+    "username": "filebeat-publisher",
+    "password": "password123",
+    "api_key": {
+        "name": "filebeat-publisher"
+    }
+}
+
+{
+    "id": "huwegkba438al9a",
+    "name": "filebeat-publisher",
+    "api_key": "uhq3nja4iano2-uh43",
+    "encoded": "8y1hbojqjiafbj98q35onah4291ansd=="
+}
+
+#Configure Filebeat
+nano /etc/filebeat/filebeat.yml 
+
+output.elasticsearch:
+    hosts: ["elastic.rapli.com:9200"]
+    protocol: "https"
+    api_key: "${ES_API_KEY}"
+
+/usr/share/filebeat/bin/filebeat keystore add ES_API_KEY -c /etc/filebeat/filebeat.yml --path.home /usr/share/filebeat --path.data /var/lib/filebeat 
+huwegkba438al9a:uhq3nja4iano2-uh43
+
+##Acces Filebeat on Kibana 
+https://kibana.rapli.com:5601 > Analytics > Discover > Choose index kibana_sample_data_log
+https://kibana.rapli.com:5601 > Observability > Overview > Metrics
+
+##Enrich events with geoIP information
+
+#Configure Elasticsearch 
+nano /etc/elasticsearch/elasticsearch.yml 
+
+bootstrap.memory_lock: true 
+ingest.geoip.downloader.enabled: false
+
+#Configure Filebeat
+nano /etc/filebeat/filebeat.yml 
+
+output.elasticsearch:
+  hosts: ["elastic.rapli.com:9200"]
+  protocol: "https"
+  pipeline: geoip-info
+  username: "elastic"
+  password: "password123"
+
+#Configure Filebeat and the Geoip Processor
+https://kibana.rapli.com:5601 > Management > Dev Tools 
+
+PUT _ingest/pipeline/geoip-info
+{
+  "description": "Add geoip info",
+  "processors": [
+    {
+      "geoip": {
+        "field": "client.ip",
+        "target_field": "client.geo",
+        "ignore_missing": true
+      }
+    },
+    {
+      "geoip": {
+        "database_file": "GeoLite2-ASN.mmdb",
+        "field": "client.ip",
+        "target_field": "client.as",
+        "properties": [
+          "asn",
+          "organization_name"
+        ],
+        "ignore_missing": true
+      }
+    },
+    {
+      "geoip": {
+        "field": "source.ip",
+        "target_field": "source.geo",
+        "ignore_missing": true
+      }
+    },
+    {
+      "geoip": {
+        "database_file": "GeoLite2-ASN.mmdb",
+        "field": "source.ip",
+        "target_field": "source.as",
+        "properties": [
+          "asn",
+          "organization_name"
+        ],
+        "ignore_missing": true
+      }
+    },
+    {
+      "geoip": {
+        "field": "destination.ip",
+        "target_field": "destination.geo",
+        "ignore_missing": true
+      }
+    },
+    {
+      "geoip": {
+        "database_file": "GeoLite2-ASN.mmdb",
+        "field": "destination.ip",
+        "target_field": "destination.as",
+        "properties": [
+          "asn",
+          "organization_name"
+        ],
+        "ignore_missing": true
+      }
+    },
+    {
+      "geoip": {
+        "field": "server.ip",
+        "target_field": "server.geo",
+        "ignore_missing": true
+      }
+    },
+    {
+      "geoip": {
+        "database_file": "GeoLite2-ASN.mmdb",
+        "field": "server.ip",
+        "target_field": "server.as",
+        "properties": [
+          "asn",
+          "organization_name"
+        ],
+        "ignore_missing": true
+      }
+    },
+    {
+      "geoip": {
+        "field": "host.ip",
+        "target_field": "host.geo",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "server.as.asn",
+        "target_field": "server.as.number",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "server.as.organization_name",
+        "target_field": "server.as.organization.name",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "client.as.asn",
+        "target_field": "client.as.number",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "client.as.organization_name",
+        "target_field": "client.as.organization.name",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "source.as.asn",
+        "target_field": "source.as.number",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "source.as.organization_name",
+        "target_field": "source.as.organization.name",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "destination.as.asn",
+        "target_field": "destination.as.number",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "destination.as.organization_name",
+        "target_field": "destination.as.organization.name",
+        "ignore_missing": true
+      }
+    }
+  ]
+}
+
+#Test get ingest geo ip statistic
+https://kibana.rapli.com:5601 > Management > Dev Tools 
+
+GET _ingest/geoip/stats

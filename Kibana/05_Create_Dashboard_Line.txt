@@ -1,0 +1,22 @@
+### CREATE DASHBOARD LINE ###
+
+##Create Line on Dashboard
+http://localhost:5601 > Analytics > Dashboard > Create new dashboard > Create visualizaton > Choose index kibana_sample_data_logs > 
+
+- Visualization type          : Choose 'Bar vertical stacked' and change to 'Line'
+- Filter by type              : transaction-sla-pct
+- X-axis                      : timestamp 
+- Y-axis                      : Average of transaction-sla-pct
+  - Select a function         : Average 
+  - Select a field            : transaction-sla-pct
+  - Display name              : Average of transaction-sla-pct
+  - Value format              : Percent, Decimals 2 
+  - Axis side                 : Auto
+- Break dowm by               : Top values of servicename
+  - Select a function         : Top values 
+  - select a field            : servicename
+  - Number of values          : 6
+  - Order by                  : Average of transaction-sla-pct
+  - Order direction           : Descending 
+  - Display name              : Top values of servicename
+  - Group by this field first : true

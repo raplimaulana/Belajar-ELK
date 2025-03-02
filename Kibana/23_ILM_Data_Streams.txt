@@ -1,0 +1,112 @@
+### ILM DATA STREAMS ###
+
+##Data Streams
+A data stream lets you store append-only time series data across multiple indices while giving you a single named resource for requests. 
+Data streams are well-suited for logs, events, metrics, and other continuously generated data.
+
+##Get Information All Node 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+GET /_cat/nodes
+
+##Creata ILM Policy 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT /_ilm/policy/hot-warm-cold-policy
+
+{
+  "policy": {
+    "phases": {
+      "hot": {
+        "min_age": "0ms",
+        "actions": {
+          "rollover": {
+            "max_age": "5m"
+          }
+        }
+      },
+      "warm": {
+        "min_age": "5m",
+        "actions": {
+          "allocate": {
+            "number_of_replicas": 0
+          },
+          "forcemerge": {
+            "max_num_segments": 1
+          },
+          "set_priority": {
+            "priority": 50
+          }
+        }
+      },
+      "cold": {
+        "min_age": "10m",
+        "actions": {
+          "allocate": {
+            "number_of_replicas": 0
+          },
+          "set_priority": {
+            "priority": 0
+          }
+        }
+      },
+      "delete": {
+        "min_age": "15m",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}
+
+##Create Index Template
+http://localhost:5601 > Management > Dev Tools > Console 
+
+PUT _index_template/template
+
+{
+  "index_patterns": ["demo*"],
+  "data_stream": {},
+  "template": {
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "user": {
+          "type": "keyword"
+        },
+        "message": {
+          "type": "text"
+        }
+      }
+    },
+    "settings": {
+      "index.number_of_replicas": 0,
+      "index.number_of_shards": 1,
+      "index.lifecycle.name": "hot-warm-cold-policy"
+    }
+  }
+}
+
+##Create Document 
+http://localhost:5601 > Management > Dev Tools > Console 
+
+POST /demo/_doc
+
+{
+  "user": "john_doe",
+  "message": "DS Document 5",
+  "@timestamp": "2024-08-04T10:00:00Z"
+}
+
+GET /_cat/shards/.ds-demo-2024.08.11-000001
+
+##Describe ILM
+http://localhost:5601 > Management > Dev Tools > Console 
+
+GET /demo/_ilm/explain
+
+GET /demo/_search
+{"size": 1000}

@@ -1,0 +1,47 @@
+### ADD INTEGRATIONS WINDOWS ###
+
+##Integration Windows to Elastic Agent 
+https://kibana.rapli.com:5601 > Management > Integrations > Search for integrations > Windows > Add Windows >
+
+Configure integration 
+Integration settings
+Integartion name                                             : windows-1
+Collect events from the following windows event log channels : true 
+forwarded                                                    : true 
+preserve original event                                      : false 
+Where to add this integration?                               : New hosts
+Create agent policy 
+New agent policy name                                        : Windows policy 1
+Collect system log and metrics                               : true 
+
+https://kibana.rapli.com:5601 > Management > Integrations > Search for integrations > Custom Windows Event Logs > Custom Windows Event Logs >
+
+Configure integration 
+Integration settings
+Integartion name               : winlog-1
+Windows event logs             : true 
+Channel name                   : Microsoft-Windows-WMI-Activity/Operational
+Dataset name                   : winlog.winlog 
+preserve original event        : false 
+Where to add this integration? : Existing hosts 
+Agent policy                   : Windows policy 1
+New agent policy name          : Windows policy 1
+Collect system log and metrics : true 
+
+Saved and continue > Custom Windows Event Logs integeration added > Add Elastic Agent to your hosts > Add Agent > Run Standalone > Configure the agent > Copy to clipboard 
+
+nano elastic-agent-8.17.2-linux-x86_64/elastic-agent.yml
+
+...
+*paste here 
+...
+
+##Restart Elastic Agent 
+/usr/bin/elastic-agent uninsntall
+elastic-agent-8.17.2-linux-x86_64/elastic-agent install 
+
+
+##Acces Integration Windows on Kibana 
+https://kibana.rapli.com:5601 > Management > Index Management > Data Streams 
+https://kibana.rapli.com:5601 > Analytics > Dashboard > Choose Default Dashboard Created > [Windows powershell] Overview
+https://kibana.rapli.com:5601 > Analytics > Dashboard > Choose Default Dashboard Created > [Metric windows] Services

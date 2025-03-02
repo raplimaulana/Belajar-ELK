@@ -1,0 +1,100 @@
+### EMAIL FILEBEAT ALERT ###
+
+##Create Encrypted Key 
+#Cara 1
+nano /etc/kibana/kibana.yml 
+
+xpack.encryptedSavedObjects.encryptionKey: 1234567890ABC
+
+systemctl restart kibana
+
+#Cara  2
+/usr/share/kibana/bin/kibana-keystore keystore list
+/usr/share/kibana/bin/kibana-keystore keystore add xpack.encryptedSavedObjects.encryptionKey
+
+systemctl restart kibana
+
+##Create Rule to Failed Login Attempt
+https://kibana.rapli.com:5601 > Management > Rules and Connectors > Create rule 
+
+Name                                : failed ssh
+Check every                         : 1 minute 
+Notify                              : On check intervals
+Select rule type                    : Log threshold
+Add condition                       : WHEN THE count OF LOG ENTRIES WITH log.level IS error 
+                                      IS more than 75 FOR THE LAST 5 minutes GROUP BY Nothing (ungrouped)
+Actions 
+Select a connector type             : Server log 
+Create a connector
+Server log connector 
+Connector name                      : Notifications                       
+Notifications
+Run when                            : Query matched 
+Server log connector                : Notifications 
+Level                               : Error 
+Message                             : - AlertName: {{rule.name}} \
+                                      - LogMessage: {{^context.isRatio}}{{#context.group}}{{context.group}} - {{/context.group}}{{context.matchingDocuments}} log entries have matched the following conditions: \
+                                        {{context.conditions}}{{/context.isRatio}}{{#context.isRatio}}{{#context.group}}{{context.group}} - {{/context.group}} Ratio of the count of log entries matching {{context.numeratorConditions}} \
+                                        to the count of log entries matching {{context.denominatorConditions}} was {{context.ratio}}{{/context.isRatio}}
+                                      
+                                      *format log look alike this
+                                       {{^context.isRatio}}
+                                         {{#context.group}}{{context.group}} - {{/context.group}}
+                                         {{context.matchingDocuments}} log entries have matched the following conditions: {{context.conditions}}
+                                       {{/context.isRatio}}
+                                       {{#context.isRatio}}
+                                         {{#context.group}}{{context.group}} - {{/context.group}} 
+                                         Ratio of the count of log entries matching {{context.numeratorConditions}} to the count of log entries matching {{context.denominatorConditions}} was {{context.ratio}}
+                                       {{/context.isRatio}}
+
+*Message ini akan mengambil dari log logstash yang dikirim 
+
+##Install Logstash 
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elastic-keyring.gpg
+sudo apt-get install apt-transport-https
+echo "deb [signed-by=/usr/share/keyrings/elastic-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+sudo apt-get update && sudo apt-get install logstash
+
+#Configure Logstash 
+nano /etc/logstash/logstash.conf 
+
+input {
+  file {
+    type => "json"
+    codec => "json"
+    path => "/var/log/kibana/kibana.log"
+    start_position => beginning
+  }
+}
+filter {
+  grok {
+    match => {
+      "message" => "Server log: - AlertName: %{DATA:alertName};- LogMessage: %{DATA:logMessage};---"
+    }
+  }
+}
+output {
+  if[log][level] == "ERROR" {
+    email {
+      to => "user@example.com"
+      from => "user@example.com"
+      subject => "Alert: %{alertName}"
+      body => "Log Message:\n%{logMessage}\n\nRaw Message:%{message}"
+      authentication => "plain"
+      address => "smtp.mailtrap.io"
+      domain => "smtp.mailtrap.io"
+      port => 2525
+      username => "enter username"
+      password => "enter password"
+    }
+    stdout {
+      codec => line {
+        format => "%{message}"
+      }
+    }
+  }
+}
+
+#Restart Logstash
+/usr/share/logstash/bin/logstash -f /etc/logstash/logstash.conf 
+

@@ -1,0 +1,52 @@
+### KIBANA FORMULA ###
+
+##Create Formula on Line Dashboard
+http://localhost:5601 > Analytics > Dashboard > Create new dashboard > Create visualizaton > Choose index kibana_sample_data_logs > 
+
+- Visualization type          : Choose 'Bar vertical stacked' and change to 'Line'
+- Filter by type              : kibana_sample_data_logs
+- Horizontal axis             : @timestamp 
+- Vertical axis               : Count of records -1w
+  - Select a function         : Count 
+  - Select field              : Records 
+  - Add Advanced options       
+    - Time shift              : 1 week ago (1w)
+  - Display name              : Count of records -1w 
+  - Value format              : Default 
+  - Axis side                 : Auto 
+- Vertical axis               : count() - count(shift='1w')
+  - Formula                   : count() - count(shift='1w')
+  - Display name              : count() - count(shift='1w')
+  - Value format              : Default 
+  - Axis side                 : Auto 
+- Vertical axis               : Percent of overall bytes
+  - Formula                   : sum(bytes) / overall_sum(sum(bytes))
+  - Display name              : Percent of overall bytes
+  - Value format              : Percent, Decimal 2 
+  - Axis side                 : Auto 
+
+##Create Formula With Color on Table Dashboard
+http://localhost:5601 > Analytics > Dashboard > Create new dashboard > Create visualizaton > Choose index kibana_sample_data_logs > 
+
+- Visualization type          : Choose 'Bar vertical stacked' and change to 'Table'
+- Filter by type              : kibana_sample_data_logs
+- Rows                        : @timestamp
+- Columns                     : 
+- Metrics                     : Percent of overall bytes
+  - Formula                   : sum(bytes) / overall_sum(sum(bytes))
+  - Display name              : Percent of overall bytes
+  - Value format              : Percent, Decimal 2 
+  - Text allignment           : Right 
+  - Hode column               : false 
+  - Summary Row               : Sum
+  - Summary label             : Sum 
+  - Color by value            : Cell
+  - Color                     : Edit 
+    - Color palette           : choose color 
+    - Color continuity        : Above range 
+    - Value type              : Percent 
+      - Color stops           : 0 %, #D6E9E4
+                                0 %, #AED3CA
+                                0 %, #85BDB1
+                                0 %, #5AA898
+                                0 %, #209280
